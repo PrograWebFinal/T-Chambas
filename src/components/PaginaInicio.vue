@@ -12,13 +12,13 @@
               <router-link to="/Perfil" class="nav-link">Mi Perfil</router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/Proyectos" class="nav-link">Mis Proyectos</router-link>
+              <router-link to="/Proyecto" class="nav-link">Mis Proyectos</router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/BuscarCompanero" class="nav-link">Buscar Compañero</router-link>
+              <router-link to="/Perfiles" class="nav-link">Buscar Compañero</router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/BuscarProyectos" class="nav-link">Buscar Proyectos</router-link>
+              <router-link to="/Proyectos" class="nav-link">Buscar Proyectos</router-link>
             </li>
           </ul>
         </div>

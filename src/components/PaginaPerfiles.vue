@@ -1,11 +1,11 @@
 <template>
     <div>
-      <h1>Explora Proyectos</h1>
+      <h1>Busca Compañeros</h1>
     </div>
   </template>
   
   <script>
   export default {
-    name: 'PaginaProyecto',
+    name: 'PaginaPerfil',
   };
   </script>

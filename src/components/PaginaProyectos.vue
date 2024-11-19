@@ -1,50 +1,22 @@
 <template>
   <div class="explora-proyectos">
     <h1>Explora Proyectos</h1>
-    <!-- Cuadro de búsqueda -->
     <input 
       type="text" 
       placeholder="Buscar por título o habilidades requeridas"
       v-model="searchQuery"
       class="busqueda"
     />
-    <!-- Botones de habilidades más buscadas -->
     <div class="habilidades-populares">
       <button v-for="habilidad in habilidadesPopulares" :key="habilidad" @click="buscarPorHabilidad(habilidad)">
         {{ habilidad }}
       </button>
     </div>
-    <!-- Proyectos en hileras de 2 -->
     <div class="proyectos">
       <div v-for="(fila, index) in filasProyectos" :key="index" class="fila">
-        <!-- Renderizar cada proyecto en la hilera -->
         <div v-for="proyecto in fila" :key="proyecto.titulo" class="proyecto" @click="seleccionarProyecto(proyecto)">
           <h3>{{ proyecto.titulo }}</h3>
           <p>Habilidades requeridas: {{ proyecto.habilidades.join(', ') }}</p>
-          <div v-if="proyectoSeleccionado === proyecto" class="flecha-abajo">⬇️</div>
-        </div>
-        <!-- Ficha técnica solo en la hilera donde está el proyecto seleccionado -->
-        <div v-if="proyectoSeleccionado && fila.includes(proyectoSeleccionado)" class="ficha-tecnica">
-          <!-- Información del proyecto -->
-          <div class="ficha-proyecto">
-            <h2>{{ proyectoSeleccionado.titulo }}</h2>
-            <p><strong>Habilidades requeridas:</strong> {{ proyectoSeleccionado.habilidades.join(', ') }}</p>
-            <p><strong>Descripción:</strong> {{ proyectoSeleccionado.descripcion }}</p>
-            <div class="imagenes">
-              <img v-for="imagen in proyectoSeleccionado.imagenes" :key="imagen" :src="imagen" alt="Imagen del proyecto" />
-            </div>
-          </div>
-          <!-- Perfiles de integrantes del proyecto -->
-          <div class="ficha-perfiles">
-            <h2>Integrantes</h2>
-            <div v-for="perfil in proyectoSeleccionado.integrantes" :key="perfil.nombre" class="perfil">
-              <img :src="perfil.foto" alt="Foto de perfil" class="foto-perfil" />
-              <h3>{{ perfil.nombre }}</h3>
-              <p>Carrera: {{ perfil.carrera }}</p>
-              <p>Habilidades: {{ perfil.habilidades.join(', ') }}</p>
-              <p v-if="perfil.proyectos.length">Proyectos: {{ perfil.proyectos.join(', ') }}</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -60,11 +32,10 @@ import JuanFoto from '../assets/Perfiles/Juan.jpg';
 import AnaFoto from '../assets/Perfiles/Ana.jpeg';
 
 export default {
-  name: 'PaginaProyecto',
+  name: 'PaginaProyectos',
   data() {
     return {
       searchQuery: '',
-      proyectoSeleccionado: null,
       habilidadesPopulares: ['Programación', 'Diseño Gráfico', 'Marketing', 'Gestión de Proyectos'],
       proyectos: [
         { titulo: 'Sistema de Gestión Escolar', habilidades: ['Programación', 'Bases de Datos'], descripcion: 'Sistema para gestionar información de estudiantes y profesores.', imagenes: [Proyecto1Img], integrantes: [{ nombre: 'Juan Pérez', foto: JuanFoto, carrera: 'Ingeniería en Tecnologías de la Información', habilidades: ['Programación', 'Ciberseguridad'], proyectos: ['Sistema de Ciberseguridad', 'Aplicación de Redes'] }] },
@@ -98,7 +69,7 @@ export default {
       this.searchQuery = habilidad;
     },
     seleccionarProyecto(proyecto) {
-      this.proyectoSeleccionado = this.proyectoSeleccionado === proyecto ? null : proyecto;
+      this.$router.push({ name: 'Detalles_proyectos', params: { proyecto: JSON.stringify(proyecto) } });
     }
   }
 };
@@ -140,40 +111,5 @@ export default {
   padding: 10px;
   text-align: center;
   cursor: pointer;
-}
-.flecha-abajo {
-  font-size: 30px;
-  color: #333;
-  margin-top: 5px;
-}
-.ficha-tecnica {
-  display: flex;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-top: 2px solid #ccc;
-  grid-column: span 2;
-}
-.ficha-proyecto, .ficha-perfiles {
-  flex: 1;
-  padding: 20px;
-}
-.imagenes img {
-  width: 100px;
-  height: 100px;
-  margin: 5px;
-  border-radius: 5px;
-}
-.perfil {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-}
-.foto-perfil {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: top;
-  margin-right: 15px;
 }
 </style>

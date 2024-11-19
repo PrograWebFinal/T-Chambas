@@ -1,103 +1,243 @@
 <template>
-  <div class="perfil-container">
-    <h1>Mi Perfil</h1>
-    <form @submit.prevent="guardarPerfil" class="perfil-form">
-      <div class="mb-3">
-        <label for="nombre" class="form-label">Nombre:</label>
-        <input
-          type="text"
-          id="nombre"
-          v-model="nombre"
-          class="form-control"
-          placeholder="Ingresa tu nombre"
-          required
-        />
-      </div>
-      <div class="mb-3">
-        <label for="habilidades" class="form-label">Habilidades:</label>
-        <input
-          type="text"
-          id="habilidades"
-          v-model="habilidades"
-          class="form-control"
-          placeholder="Ejemplo: JavaScript, Vue.js, etc."
-          required
-        />
-      </div>
-      <div class="mb-3">
-        <label for="biografia" class="form-label">Biografía:</label>
-        <textarea
-          id="biografia"
-          v-model="biografia"
-          class="form-control"
-          rows="3"
-          placeholder="Cuéntales sobre ti..."
-          required
-        ></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-      <button type="button" class="btn btn-secondary" @click="regresar">Regresar</button>
-    </form>
-    
-    <div class="perfil-info" v-if="perfilGuardado">
-      <h2>Información Actual</h2>
-      <p><strong>Nombre:</strong> {{ nombre }}</p>
-      <p><strong>Habilidades:</strong> {{ habilidades }}</p>
-      <p><strong>Biografía:</strong> {{ biografia }}</p>
+  <div>
+    <!-- Barra de navegación -->
+    <BarraMenu />
+
+    <!-- Contenedor principal del perfil -->
+    <div class="perfil-container">
+      <h1 class="text-center">Mi Perfil</h1>
+      <form @submit.prevent="guardarPerfil" class="perfil-form">
+        <!-- Nombre (solo lectura) -->
+        <div class="mb-3">
+          <label for="nombre" class="form-label">Nombre:</label>
+          <input
+            type="text"
+            id="nombre"
+            v-model="nombre"
+            class="form-control"
+            disabled
+          />
+        </div>
+
+        <!-- Habilidades -->
+        <div class="mb-3">
+          <label for="habilidades" class="form-label">Habilidades:</label>
+          <input
+            type="text"
+            v-model="filtro"
+            class="form-control"
+            placeholder="Buscar habilidad o categoría..."
+          />
+          <div class="habilidades-container">
+            <span
+              v-for="(habilidad, index) in habilidadesFiltradas.slice(0, habilidadesMostradas)"
+              :key="index"
+              :class="['habilidad-tag', { 'selected': habilidades.includes(habilidad.nombre_habilidad) }]"
+              @click="toggleHabilidad(habilidad.nombre_habilidad)"
+            >
+              {{ habilidad.nombre_habilidad }}
+            </span>
+          </div>
+          <div v-if="habilidades.length === 0" class="mt-2 text-muted">
+            Aún no tienes habilidades seleccionadas.
+          </div>
+          <div class="btn-group mt-2">
+            <button
+              type="button"
+              v-if="habilidadesFiltradas.length > habilidadesMostradas"
+              @click="verMasHabilidades"
+              class="btn btn-link"
+            >
+              Ver más
+            </button>
+            <button
+              type="button"
+              v-if="habilidadesMostradas > 5"
+              @click="verMenosHabilidades"
+              class="btn btn-link"
+            >
+              Ver menos
+            </button>
+          </div>
+        </div>
+
+        <!-- Biografía -->
+        <div class="mb-3">
+          <label for="biografia" class="form-label">Biografía:</label>
+          <textarea
+            id="biografia"
+            v-model="biografia"
+            class="form-control"
+            rows="3"
+            placeholder="Cuéntales sobre ti..."
+          ></textarea>
+        </div>
+
+        <!-- Botones -->
+        <div class="text-center">
+          <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
+          <button type="button" class="btn btn-secondary" @click="regresar">Regresar</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+import BarraMenu from "@/components/BarraMenu.vue";
+
 export default {
-  name: 'PaginaPerfil',
+  name: "PaginaPerfil",
+  components: {
+    BarraMenu,
+  },
   data() {
     return {
-      nombre: '',
-      habilidades: '',
-      biografia: '',
-      perfilGuardado: false, 
+      nombre: "", // Cargado desde la API
+      biografia: "", // Cargado desde la API
+      habilidades: [], // Habilidades del usuario
+      filtro: "",
+      habilidadesMostradas: 5,
+      baseHabilidades: [], // Todas las habilidades disponibles
     };
   },
+  computed: {
+    habilidadesFiltradas() {
+      return this.baseHabilidades.filter(
+        (habilidad) =>
+          habilidad.nombre_habilidad?.toLowerCase().includes(this.filtro.toLowerCase()) ||
+          habilidad.nombre_carrera?.toLowerCase().includes(this.filtro.toLowerCase())
+      );
+    },
+  },
   methods: {
-    guardarPerfil() {
-      this.perfilGuardado = true; 
-      alert('Perfil actualizado con éxito');
+    toggleHabilidad(nombreHabilidad) {
+      if (this.habilidades.includes(nombreHabilidad)) {
+        this.habilidades = this.habilidades.filter((h) => h !== nombreHabilidad);
+      } else {
+        this.habilidades.push(nombreHabilidad);
+      }
+    },
+    async guardarPerfil() {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        alert("No se ha iniciado sesión. Redirigiendo al inicio de sesión.");
+        this.$router.push("/login");
+        return;
+      }
+
+      try {
+        // Actualizar habilidades
+        await axios.put(`http://localhost:3000/usuarios/perfil/${userId}/habilidades`, {
+          habilidades: this.habilidades.map(
+            (nombre) =>
+              this.baseHabilidades.find((h) => h.nombre_habilidad === nombre)?.id_habilidad
+          ),
+        });
+
+        // Actualizar descripción
+        await axios.put(`http://localhost:3000/usuarios/perfil/${userId}/descripcion`, {
+          descripcion: this.biografia,
+        });
+
+        alert("Perfil actualizado con éxito.");
+      } catch (error) {
+        console.error("Error al guardar el perfil:", error);
+        alert("Ocurrió un error al actualizar tu perfil.");
+      }
     },
     regresar() {
-      this.$router.go(-1); 
+      this.$router.push("/");
     },
+    verMasHabilidades() {
+      this.habilidadesMostradas += 10;
+    },
+    verMenosHabilidades() {
+      this.habilidadesMostradas = Math.max(5, this.habilidadesMostradas - 10);
+    },
+    async cargarDatosUsuario() {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        this.$router.push("/login");
+        return;
+      }
+
+      try {
+        // Obtener información general del usuario
+        const { data: usuario } = await axios.get(`http://localhost:3000/usuarios/perfil/${userId}`);
+        this.nombre = usuario.nombre || "Usuario Anónimo";
+        this.biografia = usuario.descripcion || "";
+
+        // Obtener habilidades del usuario
+        const { data: habilidadesUsuario } = await axios.get(
+          `http://localhost:3000/usuarios/perfil/${userId}/habilidades`
+        );
+        this.habilidades = habilidadesUsuario.map((h) => h.nombre_habilidad);
+
+        // Obtener todas las habilidades disponibles
+        const { data: habilidadesDisponibles } = await axios.get(
+          `http://localhost:3000/usuarios/habilidades`
+        );
+        this.baseHabilidades = habilidadesDisponibles;
+      } catch (error) {
+        console.error("Error al cargar datos del usuario:", error);
+        alert("Ocurrió un error al cargar tu perfil.");
+      }
+    },
+  },
+  mounted() {
+    this.cargarDatosUsuario();
   },
 };
 </script>
 
 <style scoped>
 .perfil-container {
-  max-width: 600px;
-  margin: auto;
+  max-width: 800px;
+  margin: 30px auto;
   padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .perfil-form {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.habilidades-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.habilidad-tag {
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.habilidad-tag.selected {
+  background-color: #007bff;
+  color: #ffffff;
 }
 
 h1 {
-  text-align: center;
+  font-size: 2.5rem;
+  color: #343a40;
   margin-bottom: 20px;
 }
 
-.perfil-info {
-  margin-top: 30px;
-  padding: 10px;
-  background-color: #ffffff;
+.text-center {
+  text-align: center;
+}
+
+.btn {
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
 }
 </style>
-
-
-  

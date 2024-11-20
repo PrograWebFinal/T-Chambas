@@ -1,7 +1,8 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow">
     <div class="container">
-      <a class="navbar-brand" href="#">A-Tinder Chambas</a>
+      <!-- Enlace de la marca que redirige al inicio -->
+      <a class="navbar-brand" @click.prevent="irInicio" style="cursor: pointer;">A-Tinder Chambas</a>
       <button
         class="navbar-toggler"
         type="button"
@@ -56,6 +57,10 @@ export default {
     }
   },
   methods: {
+    irInicio() {
+      // Redirige a la página de inicio
+      this.$router.push("/");
+    },
     logout() {
       // Limpia el almacenamiento local y redirige al login
       localStorage.removeItem("userId");

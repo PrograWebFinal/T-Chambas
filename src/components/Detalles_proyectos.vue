@@ -1,5 +1,5 @@
 <template>
-  <div class="detalles-proyecto container mt-4">
+  <div v-if="proyecto" class="detalles-proyecto container mt-4">
     <!-- Título del proyecto -->
     <div class="header text-center mb-4">
       <h1 class="text-primary">{{ proyecto.titulo }}</h1>
@@ -7,15 +7,18 @@
     </div>
 
     <!-- Habilidades requeridas -->
-    <div class="habilidades mb-3">
+    <div v-if="proyecto.habilidades.length > 0" class="habilidades mb-3">
       <h5><strong>Habilidades requeridas:</strong></h5>
       <span
         v-for="habilidad in proyecto.habilidades"
-        :key="habilidad"
+        :key="habilidad.id_habilidad"
         class="badge bg-info text-dark me-2 mb-2"
       >
-        {{ habilidad }}
+        {{ habilidad.nombre_habilidad }}
       </span>
+    </div>
+    <div v-else>
+      <p class="text-muted">Este proyecto no tiene habilidades requeridas.</p>
     </div>
 
     <!-- Descripción -->
@@ -25,7 +28,7 @@
     </div>
 
     <!-- Imágenes del proyecto -->
-    <div class="imagenes mb-4">
+    <div v-if="proyecto.imagenes.length > 0" class="imagenes mb-4">
       <h5><strong>Galería del proyecto:</strong></h5>
       <div class="row">
         <div v-for="imagen in proyecto.imagenes" :key="imagen" class="col-sm-6 col-md-4 mb-3">
@@ -39,14 +42,17 @@
         </div>
       </div>
     </div>
+    <div v-else>
+      <p class="text-muted">No hay imágenes disponibles para este proyecto.</p>
+    </div>
 
     <!-- Integrantes -->
-    <div class="integrantes">
+    <div v-if="proyecto.integrantes.length > 0" class="integrantes">
       <h5><strong>Integrantes:</strong></h5>
       <div class="row">
         <div
           v-for="perfil in proyecto.integrantes"
-          :key="perfil.nombre"
+          :key="perfil.id_usuario"
           class="col-sm-12 col-md-6 col-lg-4 mb-4"
         >
           <div class="card h-100 shadow">
@@ -78,6 +84,9 @@
         </div>
       </div>
     </div>
+    <div v-else>
+      <p class="text-muted">No hay integrantes asociados con este proyecto.</p>
+    </div>
 
     <!-- Botones de acción -->
     <div class="acciones mt-4 text-center">
@@ -85,7 +94,7 @@
         Compartir Proyecto
       </button>
       <button class="btn btn-outline-success" @click="marcarFavorito">
-        Marcar como Favorito
+        {{ favorito ? "Quitar de Favoritos" : "Marcar como Favorito" }}
       </button>
     </div>
 
@@ -94,20 +103,39 @@
       <img :src="lightboxImagen" alt="Imagen ampliada del proyecto" class="img-fluid" />
     </div>
   </div>
+
+  <div v-else class="text-center mt-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "DetallesProyectos",
   data() {
     return {
+      proyecto: null,
       lightboxImagen: null,
+      favorito: false, // Estado inicial para el botón de favoritos
     };
   },
-  computed: {
-    proyecto() {
-      return JSON.parse(this.$route.params.proyecto);
-    },
+  async created() {
+    const id = this.$route.params.id; // Obtener el ID del proyecto desde la URL
+    try {
+      const response = await axios.get(`http://localhost:3000/proyectos/${id}`);
+      this.proyecto = {
+        ...response.data,
+        habilidades: response.data.habilidades || [],
+        imagenes: response.data.imagenes || [],
+        integrantes: response.data.integrantes || [],
+      };
+    } catch (error) {
+      console.error("Error al cargar los detalles del proyecto:", error);
+    }
   },
   methods: {
     abrirLightbox(imagen) {
@@ -123,7 +151,11 @@ export default {
       });
     },
     marcarFavorito() {
-      alert("Proyecto marcado como favorito.");
+      this.favorito = !this.favorito;
+      const mensaje = this.favorito
+        ? "Proyecto marcado como favorito."
+        : "Proyecto eliminado de favoritos.";
+      alert(mensaje);
     },
   },
 };

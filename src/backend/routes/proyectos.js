@@ -130,4 +130,83 @@ router.get('/habilidades', async (req, res) => {
   }
 });
 
+// Obtener todos los proyectos
+router.get('/', async (req, res) => {
+  try {
+    // Consulta para obtener los proyectos
+    const [proyectos] = await db.promise().query(
+      `SELECT 
+         p.id_proyecto, 
+         p.nombre_proyecto, 
+         IFNULL(p.descripcion, 'Sin descripción') AS descripcion, 
+         u.nombre AS creador
+       FROM proyectos p
+       LEFT JOIN usuarios u ON p.id_usuario_creador = u.id_usuario`
+    );
+
+    // Agregar habilidades a cada proyecto
+    for (const proyecto of proyectos) {
+      const [habilidades] = await db.promise().query(
+        `SELECT h.id_habilidad, h.nombre_habilidad
+         FROM proyecto_habilidades ph
+         JOIN habilidades h ON ph.id_habilidad = h.id_habilidad
+         WHERE ph.id_proyecto = ?`,
+        [proyecto.id_proyecto]
+      );
+      proyecto.habilidades = habilidades;
+    }
+
+    res.status(200).json(proyectos);
+  } catch (error) {
+    console.error('Error al obtener proyectos:', error);
+    res.status(500).json({ error: 'Error al obtener proyectos.' });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Obtener detalles del proyecto
+    const [proyectos] = await db.promise().query(
+      `SELECT id_proyecto, nombre_proyecto, descripcion 
+       FROM proyectos
+       WHERE id_proyecto = ?`,
+      [id]
+    );
+
+    if (proyectos.length === 0) {
+      return res.status(404).json({ error: "Proyecto no encontrado" });
+    }
+
+    const proyecto = proyectos[0];
+
+    // Obtener habilidades del proyecto
+    const [habilidades] = await db.promise().query(
+      `SELECT h.id_habilidad, h.nombre_habilidad
+       FROM proyecto_habilidades ph
+       JOIN habilidades h ON ph.id_habilidad = h.id_habilidad
+       WHERE ph.id_proyecto = ?`,
+      [id]
+    );
+
+    // Obtener integrantes
+    const [integrantes] = await db.promise().query(
+      `SELECT u.id_usuario, u.nombre, u.carrera, u.descripcion
+       FROM proyecto_integrantes pi
+       JOIN usuarios u ON pi.id_usuario = u.id_usuario
+       WHERE pi.id_proyecto = ?`,
+      [id]
+    );
+
+    proyecto.habilidades = habilidades;
+    proyecto.integrantes = integrantes;
+    proyecto.imagenes = []; // Opcional: agrega lógica para imágenes si las tienes
+
+    res.status(200).json(proyecto);
+  } catch (error) {
+    console.error('Error al obtener detalles del proyecto:', error);
+    res.status(500).json({ error: 'Error al obtener detalles del proyecto.' });
+  }
+});
+
 module.exports = router;

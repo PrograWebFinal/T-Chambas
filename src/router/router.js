@@ -20,7 +20,8 @@ const routes = [
   { path: '/Proyectos', name: 'Proyectos', component: PaginaProyectos}, 
   { path: '/Detalles_proyectos', name: 'Detalles_proyectos', component: Detalles_proyectos}, 
   { path: '/login', name: 'login', component: login},
-  { path: '/BarraMenu', name: 'BarraMenu', component: BarraMenu},  
+  { path: '/BarraMenu', name: 'BarraMenu', component: BarraMenu},
+  
 ];
 
 const router = createRouter({

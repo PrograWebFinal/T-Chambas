@@ -37,14 +37,14 @@
           <!-- Renderizar cada perfil en la hilera -->
           <div 
             v-for="perfil in fila" 
-            :key="perfil.nombre" 
+            :key="perfil.id_usuario" 
             class="col-md-3 text-center"
             @click="seleccionarPerfil(perfil)"
           >
             <div class="perfil">
-              <img :src="perfil.foto" alt="Foto de perfil" class="foto-perfil" />
+              <img :src="perfil.foto || defaultFoto" alt="Foto de perfil" class="foto-perfil" />
               <h3 class="mt-2">{{ perfil.nombre }}</h3>
-              <p>Habilidades: {{ perfil.habilidades.join(', ') }}</p>
+              <p>Habilidades: {{ perfil.habilidades.map(h => h.nombre_habilidad).join(', ') }}</p>
               <div v-if="perfilSeleccionado === perfil" class="flecha-abajo">⬇️</div>
             </div>
           </div>
@@ -55,14 +55,14 @@
             class="ficha-tecnica"
           >
             <img 
-              :src="perfilSeleccionado.foto" 
+              :src="perfilSeleccionado.foto || defaultFoto" 
               alt="Foto del perfil" 
               class="ficha-foto-perfil" 
             />
             <div class="ficha-detalles">
               <h2>{{ perfilSeleccionado.nombre }}</h2>
               <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
-              <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades.join(', ') }}</p>
+              <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades.map(h => h.nombre_habilidad).join(', ') }}</p>
               <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
               <p v-if="perfilSeleccionado.proyectos.length"><strong>Proyectos:</strong> {{ perfilSeleccionado.proyectos.join(', ') }}</p>
               <button class="btn btn-success">Conectar o Invitar</button>
@@ -75,13 +75,9 @@
 </template>
 
 <script>
+import axios from "axios";
 import BarraMenu from "@/components/BarraMenu.vue";
-import JuanFoto from "../assets/Perfiles/Juan.jpg";
-import AnaFoto from "../assets/Perfiles/Ana.jpeg";
-import LuisFoto from "../assets/Perfiles/Luis.jpg";
-import MariaFoto from "../assets/Perfiles/Maria.jpg";
-import DiegoFoto from "../assets/Perfiles/Diego.jpg";
-import PedroFoto from "../assets/Perfiles/Pedro.jpg";
+import defaultFoto from "../assets/Perfiles/Juan.jpg";
 
 export default {
   name: "PaginaBuscarCompaneros",
@@ -99,56 +95,8 @@ export default {
         "Gestión de Proyectos", 
         "Contabilidad"
       ],
-      perfiles: [
-        { 
-          nombre: "Juan Pérez", 
-          foto: JuanFoto, 
-          carrera: "Ingeniería en Tecnologías de la Información", 
-          habilidades: ["Programación", "Ciberseguridad"], 
-          descripcion: "Estudiante apasionado por la tecnología y la seguridad informática.", 
-          proyectos: ["Sistema de Ciberseguridad", "Aplicación de Redes"] 
-        },
-        { 
-          nombre: "Ana López", 
-          foto: AnaFoto, 
-          carrera: "Diseño Multimedia", 
-          habilidades: ["Diseño Gráfico", "Fotografía"], 
-          descripcion: "Amante del diseño visual y la fotografía digital.", 
-          proyectos: [] 
-        },
-        { 
-          nombre: "Luis García", 
-          foto: LuisFoto, 
-          carrera: "Mercadotecnia Estratégica", 
-          habilidades: ["Marketing", "Redacción"], 
-          descripcion: "Experto en marketing digital y contenido creativo.", 
-          proyectos: ["Campaña Publicitaria 2023"] 
-        },
-        { 
-          nombre: "María Fernández", 
-          foto: MariaFoto, 
-          carrera: "Administración y Dirección de Empresas", 
-          habilidades: ["Gestión de Proyectos", "Liderazgo"], 
-          descripcion: "Apasionada por la gestión de proyectos y el liderazgo.", 
-          proyectos: ["Gestión de Eventos Estudiantiles"] 
-        },
-        { 
-          nombre: "Diego Martínez", 
-          foto: DiegoFoto, 
-          carrera: "Finanzas y Contaduría Pública", 
-          habilidades: ["Contabilidad", "Finanzas"], 
-          descripcion: "Entusiasta de las finanzas y la contabilidad.", 
-          proyectos: [] 
-        },
-        { 
-          nombre: "Pedro Paredes", 
-          foto: PedroFoto, 
-          carrera: "Ingeniería Mecatrónica", 
-          habilidades: ["Electrónica", "Programación"], 
-          descripcion: "Apasionado por la mecatrónica y la programación.", 
-          proyectos: [] 
-        },
-      ],
+      perfiles: [], // Inicialmente vacío
+      defaultFoto, // Foto predeterminada
     };
   },
   computed: {
@@ -160,7 +108,7 @@ export default {
       return this.perfiles.filter(
         (perfil) =>
           perfil.nombre.toLowerCase().includes(query) || 
-          perfil.habilidades.some((habilidad) => habilidad.toLowerCase().includes(query))
+          perfil.habilidades.some((habilidad) => habilidad.nombre_habilidad.toLowerCase().includes(query))
       );
     },
     filasPerfiles() {
@@ -172,6 +120,22 @@ export default {
     },
   },
   methods: {
+    async cargarPerfiles() {
+      try {
+        const response = await axios.get("http://localhost:3000/usuarios");
+        this.perfiles = response.data.map((usuario) => ({
+          id_usuario: usuario.id_usuario,
+          nombre: usuario.nombre,
+          foto: usuario.foto || null, // Foto opcional
+          carrera: usuario.carrera || "No especificado",
+          habilidades: usuario.habilidades || [],
+          descripcion: usuario.descripcion || "Sin descripción",
+          proyectos: usuario.proyectos || [],
+        }));
+      } catch (error) {
+        console.error("Error al cargar perfiles:", error);
+      }
+    },
     buscarPorHabilidad(habilidad) {
       this.searchQuery = habilidad;
     },
@@ -179,40 +143,37 @@ export default {
       this.perfilSeleccionado = this.perfilSeleccionado === perfil ? null : perfil;
     },
   },
+  mounted() {
+    this.cargarPerfiles(); // Cargar perfiles al montar el componente
+  },
 };
 </script>
 
-<style scoped>
+<style>
 .buscar-companeros {
-  max-width: 1200px;
-  margin: auto;
   padding: 20px;
+}
+.foto-perfil, .ficha-foto-perfil {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+.ficha-tecnica {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+}
+.ficha-detalles {
+  margin-left: 20px;
 }
 .perfiles-alumnos {
   margin-top: 20px;
 }
-.foto-perfil {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-}
 .flecha-abajo {
   font-size: 20px;
   color: #007bff;
-}
-.ficha-tecnica {
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  padding: 20px;
-  border-radius: 8px;
-}
-.ficha-foto-perfil {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-}
-.ficha-detalles {
-  text-align: left;
 }
 </style>

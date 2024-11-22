@@ -51,13 +51,13 @@
         >
           <div
             v-for="proyecto in fila"
-            :key="proyecto.titulo"
+            :key="proyecto.id_proyecto"
             class="col-sm-12 col-md-6 col-lg-4"
           >
             <div class="proyecto card h-100" @click="seleccionarProyecto(proyecto)">
               <img
-                v-if="proyecto.imagenes.length > 0"
-                :src="proyecto.imagenes[0]"
+                v-if="proyecto.imagen"
+                :src="proyecto.imagen"
                 alt="Imagen del proyecto"
                 class="card-img-top"
                 loading="lazy"
@@ -65,8 +65,8 @@
               <div class="card-body">
                 <h3 class="card-title">{{ proyecto.titulo }}</h3>
                 <p class="card-text">
-                  <span class="badge bg-secondary me-1" v-for="habilidad in proyecto.habilidades" :key="habilidad">
-                    {{ habilidad }}
+                  <span class="badge bg-secondary me-1" v-for="habilidad in proyecto.habilidades" :key="habilidad.id_habilidad">
+                    {{ habilidad.nombre_habilidad }}
                   </span>
                 </p>
                 <p class="card-text text-muted">{{ proyecto.descripcion }}</p>
@@ -98,10 +98,8 @@
 </template>
 
 <script>
+import axios from "axios";
 import BarraMenu from "@/components/BarraMenu.vue";
-import Proyecto1Img from "../assets/proyecto1.jpg";
-import Proyecto2Img from "../assets/proyecto2.jpg";
-import Proyecto3Img from "../assets/proyecto3.jpg";
 
 export default {
   name: "PaginaProyectos",
@@ -112,32 +110,7 @@ export default {
     return {
       searchQuery: "",
       habilidadesPopulares: ["Programación", "Diseño Gráfico", "Marketing", "Gestión de Proyectos"],
-      proyectos: [
-        {
-          titulo: "Sistema de Gestión Escolar",
-          habilidades: ["Programación", "Bases de Datos"],
-          descripcion: "Sistema para gestionar información de estudiantes y profesores.",
-          imagenes: [Proyecto1Img],
-        },
-        {
-          titulo: "Rediseño de Marca Universitaria",
-          habilidades: ["Diseño Gráfico", "Marketing"],
-          descripcion: "Proyecto de rediseño de la marca de la universidad.",
-          imagenes: [Proyecto2Img],
-        },
-        {
-          titulo: "Aplicación de Finanzas Personales",
-          habilidades: ["Programación", "Finanzas"],
-          descripcion: "Aplicación para gestionar finanzas personales.",
-          imagenes: [Proyecto3Img],
-        },
-        {
-          titulo: "Propuesta de Desarrollo Empresarial",
-          habilidades: ["Gestión de Proyectos", "Contaduría"],
-          descripcion: "Propuesta para el desarrollo de estrategias empresariales.",
-          imagenes: [],
-        },
-      ],
+      proyectos: [], // Inicialmente vacío
       paginaActual: 1,
       elementosPorPagina: 6,
       cargando: false,
@@ -152,7 +125,9 @@ export default {
       return this.proyectos.filter(
         (proyecto) =>
           proyecto.titulo.toLowerCase().includes(query) ||
-          proyecto.habilidades.some((habilidad) => habilidad.toLowerCase().includes(query))
+          proyecto.habilidades.some((habilidad) =>
+            habilidad.nombre_habilidad.toLowerCase().includes(query)
+          )
       );
     },
     filasProyectos() {
@@ -170,6 +145,23 @@ export default {
     },
   },
   methods: {
+    async cargarProyectos() {
+      this.cargando = true;
+      try {
+        const response = await axios.get("http://localhost:3000/proyectos");
+        this.proyectos = response.data.map((proyecto) => ({
+          id_proyecto: proyecto.id_proyecto,
+          titulo: proyecto.nombre_proyecto,
+          descripcion: proyecto.descripcion || "Sin descripción",
+          imagen: proyecto.imagen || null,
+          habilidades: proyecto.habilidades || [],
+        }));
+      } catch (error) {
+        console.error("Error al cargar proyectos:", error);
+      } finally {
+        this.cargando = false;
+      }
+    },
     buscarPorHabilidad(habilidad) {
       this.searchQuery = habilidad;
     },
@@ -185,7 +177,11 @@ export default {
       this.paginaActual = 1;
     },
   },
+  mounted() {
+    this.cargarProyectos(); // Cargar proyectos al montar el componente
+  },
 };
+
 </script>
 
 <style scoped>

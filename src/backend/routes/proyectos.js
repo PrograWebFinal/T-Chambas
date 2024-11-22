@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db'); // Conexión a la base de datos
+const { obtenerHabilidades } = require('../services/habilidades'); // Servicio compartido
 
 // Crear un proyecto
 router.post('/', async (req, res) => {
@@ -118,22 +119,15 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Reutilizar el endpoint de habilidades desde usuarios
 router.get('/habilidades', async (req, res) => {
-    console.log("Solicitud recibida para obtener habilidades.");
-    try {
-      const [habilidades] = await db.promise().query(
-        `SELECT h.id_habilidad, h.nombre_habilidad, c.nombre_carrera 
-         FROM habilidades h
-         LEFT JOIN carreras c ON h.id_carrera = c.id_carrera`
-      );
-  
-      res.status(200).json(habilidades);
-    } catch (error) {
-      console.error('Error al obtener las habilidades:', error);
-      res.status(500).json({ error: 'Error al obtener las habilidades.' });
-    }
-  });  
+  try {
+    const [habilidades] = await obtenerHabilidades();
+    res.status(200).json(habilidades);
+  } catch (error) {
+    console.error('Error al obtener habilidades:', error);
+    res.status(500).json({ error: 'Error al obtener las habilidades.' });
+  }
+});
 
 module.exports = router;
-
-  

@@ -45,7 +45,7 @@
             <span
               v-for="(talento, index) in talentosFiltrados.slice(0, talentosMostrados)"
               :key="index"
-              :class="['talento-tag', { 'selected': talentoBuscado.includes(talento.nombre_habilidad) }]"
+              :class="['talento-tag', { 'selected': talentoBuscado.some(t => t.id_habilidad === talento.id_habilidad) }]"
               @click="toggleTalento(talento.id_habilidad, talento.nombre_habilidad)"
             >
               {{ talento.nombre_habilidad }}
@@ -124,15 +124,14 @@ export default {
       proyectos: [],
       filtro: "",
       talentosMostrados: 5,
-      baseTalentos: [], // Todas las habilidades disponibles
+      baseTalentos: [],
       proyectoEditando: null,
     };
   },
   computed: {
     talentosFiltrados() {
-      return this.baseTalentos.filter(
-        (talento) =>
-          talento.nombre_habilidad.toLowerCase().includes(this.filtro.toLowerCase())
+      return this.baseTalentos.filter((talento) =>
+        talento.nombre_habilidad.toLowerCase().includes(this.filtro.toLowerCase())
       );
     },
   },
@@ -140,10 +139,11 @@ export default {
     toggleTalento(id_habilidad, nombre_habilidad) {
       const index = this.talentoBuscado.findIndex((t) => t.id_habilidad === id_habilidad);
       if (index !== -1) {
-        this.talentoBuscado.splice(index, 1);
+        this.talentoBuscado.splice(index, 1); // Eliminar si ya está seleccionado
       } else {
-        this.talentoBuscado.push({ id_habilidad, nombre_habilidad });
+        this.talentoBuscado.push({ id_habilidad, nombre_habilidad }); // Agregar si no está
       }
+      console.log("Talentos seleccionados:", this.talentoBuscado); // Verifica los cambios
     },
     async publicarProyecto() {
       const userId = localStorage.getItem("userId");
@@ -205,8 +205,12 @@ export default {
     },
     async cargarTalentos() {
       try {
-        const { data } = await axios.get("http://localhost:3000/proyectos/habilidades");
-        this.baseTalentos = data;
+        const { data } = await axios.get("http://localhost:3000/usuarios/habilidades");
+        console.log("Habilidades cargadas:", data); // Verificar la estructura
+        this.baseTalentos = data.map((talento) => ({
+          id_habilidad: talento.id_habilidad,
+          nombre_habilidad: talento.nombre_habilidad,
+        }));
       } catch (error) {
         console.error("Error al cargar habilidades:", error);
         alert("Ocurrió un error al cargar las habilidades.");
@@ -233,7 +237,10 @@ export default {
       this.proyectoEditando = proyecto;
       this.titulo = proyecto.nombre_proyecto;
       this.descripcion = proyecto.descripcion;
-      this.talentoBuscado = proyecto.habilidades;
+      this.talentoBuscado = proyecto.habilidades.map((h) => ({
+        id_habilidad: h.id_habilidad,
+        nombre_habilidad: h.nombre_habilidad,
+      }));
     },
   },
   mounted() {

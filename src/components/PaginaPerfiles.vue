@@ -6,20 +6,20 @@
     <!-- Contenido principal -->
     <div class="buscar-companeros">
       <h1 class="text-center">Busca Compañeros</h1>
-      
+
       <!-- Cuadro de búsqueda -->
-      <input 
-        type="text" 
+      <input
+        type="text"
         placeholder="Buscar por nombre o habilidades"
         v-model="searchQuery"
         class="form-control mb-4"
       />
-      
+
       <!-- Botones de habilidades más buscadas -->
       <div class="habilidades-populares">
-        <button 
-          v-for="habilidad in habilidadesPopulares" 
-          :key="habilidad" 
+        <button
+          v-for="habilidad in habilidadesPopulares"
+          :key="habilidad"
           @click="buscarPorHabilidad(habilidad)"
           class="btn btn-outline-primary me-2"
         >
@@ -29,44 +29,39 @@
 
       <!-- Perfiles de alumnos en hileras -->
       <div class="perfiles-alumnos">
-        <div 
-          v-for="(fila, index) in filasPerfiles" 
-          :key="index" 
-          class="row mb-4"
-        >
+        <div v-for="(fila, index) in filasPerfiles" :key="index" class="row mb-4">
           <!-- Renderizar cada perfil en la hilera -->
-          <div 
-            v-for="perfil in fila" 
-            :key="perfil.id_usuario" 
+          <div
+            v-for="perfil in fila"
+            :key="perfil.id_usuario"
             class="col-md-3 text-center"
             @click="seleccionarPerfil(perfil)"
           >
             <div class="perfil">
               <img :src="perfil.foto || defaultFoto" alt="Foto de perfil" class="foto-perfil" />
               <h3 class="mt-2">{{ perfil.nombre }}</h3>
-              <p>Habilidades: {{ perfil.habilidades.map(h => h.nombre_habilidad).join(', ') }}</p>
+              <p>Habilidades: {{ perfil.habilidades }}</p>
               <div v-if="perfilSeleccionado === perfil" class="flecha-abajo">⬇️</div>
             </div>
           </div>
-          
-          <!-- Ficha técnica -->
-          <div 
-            v-if="perfilSeleccionado && fila.includes(perfilSeleccionado)" 
-            class="ficha-tecnica"
-          >
-            <img 
-              :src="perfilSeleccionado.foto || defaultFoto" 
-              alt="Foto del perfil" 
-              class="ficha-foto-perfil" 
-            />
-            <div class="ficha-detalles">
-              <h2>{{ perfilSeleccionado.nombre }}</h2>
-              <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
-              <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades.map(h => h.nombre_habilidad).join(', ') }}</p>
-              <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
-              <p v-if="perfilSeleccionado.proyectos.length"><strong>Proyectos:</strong> {{ perfilSeleccionado.proyectos.join(', ') }}</p>
-              <button class="btn btn-success">Conectar o Invitar</button>
-            </div>
+        </div>
+
+        <!-- Ficha técnica -->
+        <div
+          v-if="perfilSeleccionado"
+          class="ficha-tecnica"
+        >
+          <img
+            :src="perfilSeleccionado.foto || defaultFoto"
+            alt="Foto del perfil"
+            class="ficha-foto-perfil"
+          />
+          <div class="ficha-detalles">
+            <h2>{{ perfilSeleccionado.nombre }}</h2>
+            <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
+            <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
+            <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
+            <button class="btn btn-success">Conectar o Invitar</button>
           </div>
         </div>
       </div>
@@ -89,26 +84,24 @@ export default {
       searchQuery: "",
       perfilSeleccionado: null,
       habilidadesPopulares: [
-        "Programación", 
-        "Fotografía", 
-        "Marketing", 
-        "Gestión de Proyectos", 
-        "Contabilidad"
+        "Programación",
+        "Fotografía",
+        "Marketing",
+        "Gestión de Proyectos",
+        "Contabilidad",
       ],
-      perfiles: [], // Inicialmente vacío
+      perfiles: [], // Lista de perfiles cargados
       defaultFoto, // Foto predeterminada
     };
   },
   computed: {
     perfilesFiltrados() {
-      if (!this.searchQuery) {
-        return this.perfiles;
-      }
+      if (!this.searchQuery) return this.perfiles;
       const query = this.searchQuery.toLowerCase();
       return this.perfiles.filter(
         (perfil) =>
-          perfil.nombre.toLowerCase().includes(query) || 
-          perfil.habilidades.some((habilidad) => habilidad.nombre_habilidad.toLowerCase().includes(query))
+          perfil.nombre.toLowerCase().includes(query) ||
+          perfil.habilidades.toLowerCase().includes(query)
       );
     },
     filasPerfiles() {
@@ -122,15 +115,25 @@ export default {
   methods: {
     async cargarPerfiles() {
       try {
-        const response = await axios.get("http://localhost:3000/usuarios");
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          console.error("No se encontró userId en localStorage.");
+          this.$router.push("/login");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:3000/usuarios", {
+          params: { userId },
+        });
+
         this.perfiles = response.data.map((usuario) => ({
           id_usuario: usuario.id_usuario,
           nombre: usuario.nombre,
-          foto: usuario.foto || null, // Foto opcional
+          foto: usuario.foto || null,
           carrera: usuario.carrera || "No especificado",
-          habilidades: usuario.habilidades || [],
+          habilidades: usuario.habilidades || "Sin habilidades",
           descripcion: usuario.descripcion || "Sin descripción",
-          proyectos: usuario.proyectos || [],
         }));
       } catch (error) {
         console.error("Error al cargar perfiles:", error);
@@ -148,6 +151,7 @@ export default {
   },
 };
 </script>
+
 
 <style>
 .buscar-companeros {

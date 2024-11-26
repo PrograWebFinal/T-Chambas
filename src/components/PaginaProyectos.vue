@@ -148,7 +148,18 @@ export default {
     async cargarProyectos() {
       this.cargando = true;
       try {
-        const response = await axios.get("http://localhost:3000/proyectos");
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          console.error("No se encontró userId en localStorage.");
+          this.$router.push("/login");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:3000/proyectos", {
+          params: { userId },
+        });
+
         this.proyectos = response.data.map((proyecto) => ({
           id_proyecto: proyecto.id_proyecto,
           titulo: proyecto.nombre_proyecto,
@@ -181,8 +192,8 @@ export default {
     this.cargarProyectos(); // Cargar proyectos al montar el componente
   },
 };
-
 </script>
+
 
 <style scoped>
 .explora-proyectos {

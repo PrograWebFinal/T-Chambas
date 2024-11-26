@@ -200,51 +200,43 @@ router.put('/perfil/:id/descripcion', async (req, res) => {
   }
 });
 
-// Obtener todos los usuarios con sus habilidades y proyectos
-router.get('/', async (req, res) => {
+// Obtener todos los usuarios con sus habilidades y proyectos, excluyendo al usuario actual
+router.get("/", async (req, res) => {
   try {
-    // Obtener información básica de los usuarios
+    // Obtener el userId desde los parámetros
+    const usuarioActualId = req.query.userId;
+
+    // Validar que se haya proporcionado un userId
+    if (!usuarioActualId) {
+      return res.status(400).json({ error: "El ID del usuario es requerido." });
+    }
+
+    // Consulta para obtener los usuarios, excluyendo al usuario actual
     const [usuarios] = await db.promise().query(
       `SELECT 
          u.id_usuario, 
          u.nombre, 
          u.apellidos, 
-         NULL AS foto, -- Foto no está en la tabla, ajusta si es necesario
          IFNULL(c.nombre_carrera, 'No especificado') AS carrera, 
-         IFNULL(u.descripcion, 'Sin descripción') AS descripcion
+         IFNULL(u.descripcion, 'Sin descripción') AS descripcion,
+         GROUP_CONCAT(h.nombre_habilidad SEPARATOR ', ') AS habilidades
        FROM usuarios u
-       LEFT JOIN carreras c ON u.id_carrera = c.id_carrera`
+       LEFT JOIN carreras c ON u.id_carrera = c.id_carrera
+       LEFT JOIN usuario_habilidades uh ON u.id_usuario = uh.id_usuario
+       LEFT JOIN habilidades h ON uh.id_habilidad = h.id_habilidad
+       WHERE u.id_usuario != ?
+       GROUP BY u.id_usuario`,
+      [usuarioActualId]
     );
 
-    // Iterar sobre cada usuario para agregar habilidades y proyectos
-    for (const usuario of usuarios) {
-      // Obtener habilidades del usuario
-      const [habilidades] = await db.promise().query(
-        `SELECT h.nombre_habilidad 
-         FROM usuario_habilidades uh
-         JOIN habilidades h ON uh.id_habilidad = h.id_habilidad
-         WHERE uh.id_usuario = ?`,
-        [usuario.id_usuario]
-      );
-
-      // Obtener proyectos del usuario
-      const [proyectos] = await db.promise().query(
-        `SELECT p.nombre_proyecto 
-         FROM proyectos p
-         WHERE p.id_usuario_creador = ?`,
-        [usuario.id_usuario]
-      );
-
-      // Agregar habilidades y proyectos al usuario
-      usuario.habilidades = habilidades || [];
-      usuario.proyectos = proyectos.length > 0 ? proyectos.map((p) => p.nombre_proyecto) : [];
-    }
-
-    res.status(200).json(usuarios);
+    res.status(200).json(usuarios); // Enviar los usuarios al cliente
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    res.status(500).json({ error: 'Error interno al obtener usuarios.' });
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ error: "Error interno al obtener usuarios." });
   }
 });
+
+
+
 
 module.exports = router;

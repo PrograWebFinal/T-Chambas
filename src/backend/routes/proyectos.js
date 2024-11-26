@@ -131,20 +131,24 @@ router.get('/habilidades', async (req, res) => {
 });
 
 // Obtener todos los proyectos
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    // Consulta para obtener los proyectos
+    const usuarioActualId = req.query.userId;
+
+    if (!usuarioActualId) {
+      return res.status(400).json({ error: "El ID del usuario es requerido." });
+    }
+
     const [proyectos] = await db.promise().query(
       `SELECT 
          p.id_proyecto, 
          p.nombre_proyecto, 
-         IFNULL(p.descripcion, 'Sin descripción') AS descripcion, 
-         u.nombre AS creador
+         IFNULL(p.descripcion, 'Sin descripción') AS descripcion
        FROM proyectos p
-       LEFT JOIN usuarios u ON p.id_usuario_creador = u.id_usuario`
+       WHERE p.id_usuario_creador != ?`,
+      [usuarioActualId]
     );
 
-    // Agregar habilidades a cada proyecto
     for (const proyecto of proyectos) {
       const [habilidades] = await db.promise().query(
         `SELECT h.id_habilidad, h.nombre_habilidad
@@ -158,8 +162,8 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(proyectos);
   } catch (error) {
-    console.error('Error al obtener proyectos:', error);
-    res.status(500).json({ error: 'Error al obtener proyectos.' });
+    console.error("Error al obtener proyectos:", error);
+    res.status(500).json({ error: "Error al obtener proyectos." });
   }
 });
 

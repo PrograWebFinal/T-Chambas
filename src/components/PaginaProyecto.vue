@@ -6,6 +6,8 @@
     <!-- Contenedor principal -->
     <div class="proyecto-container">
       <h1 class="text-center">Mis Proyectos</h1>
+
+      <!-- Formulario para crear/editar proyectos -->
       <form @submit.prevent="publicarProyecto" class="proyecto-form">
         <!-- Título del Proyecto -->
         <div class="mb-3">
@@ -74,7 +76,7 @@
         <!-- Botones -->
         <div class="text-center">
           <button type="submit" class="btn btn-primary me-2">Publicar Proyecto</button>
-          <button type="button" class="btn btn-secondary" @click="regresar">Regresar</button>
+          <button type="button" class="btn btn-secondary" @click="limpiarFormulario">Cancelar</button>
         </div>
       </form>
 
@@ -95,13 +97,32 @@
               <span v-else>
                 Sin talento especificado
               </span>
-            </div>
-            <div class="mt-2">
-              <button @click="editarProyecto(proyecto)" class="btn btn-sm btn-warning me-2">Editar</button>
-              <button @click="eliminarProyecto(proyecto.id_proyecto)" class="btn btn-sm btn-danger">Eliminar</button>
+              <br />
+              <button @click="mostrarColaboradores(proyecto)" class="btn btn-sm btn-info mt-2">Ver Colaboradores</button>
+              <button @click="editarProyecto(proyecto)" class="btn btn-sm btn-warning mt-2">Editar</button>
+              <button @click="eliminarProyecto(proyecto.id_proyecto)" class="btn btn-sm btn-danger mt-2">Eliminar</button>
             </div>
           </li>
         </ul>
+      </div>
+
+      <!-- Modal de Colaboradores -->
+      <div v-if="modalColaboradores" class="modal-backdrop">
+        <div class="modal-content">
+          <h2>Compañeros que son parte de {{ proyectoSeleccionado.nombre_proyecto }}</h2>
+          <ul>
+            <li v-for="colaborador in colaboradores" :key="colaborador.id_usuario">
+              <strong>Nombre:</strong> {{ colaborador.nombre }}
+              <br />
+              <strong>Habilidades:</strong> {{ colaborador.habilidades.join(', ') }}
+              <br />
+              <strong>Correo:</strong> {{ colaborador.correo }}
+              <br />
+              <button @click="eliminarColaborador(colaborador.id_usuario)" class="btn btn-sm btn-danger mt-2">Eliminar</button>
+            </li>
+          </ul>
+          <button @click="cerrarModal" class="btn btn-secondary mt-3">Cerrar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -125,8 +146,11 @@ export default {
       proyectos: [],
       filtro: "",
       talentosMostrados: 5,
-      baseTalentos: [],
+      baseTalentos: [], // Almacena los talentos disponibles
       proyectoEditando: null,
+      modalColaboradores: false,
+      colaboradores: [],
+      proyectoSeleccionado: null,
     };
   },
   computed: {
@@ -137,6 +161,84 @@ export default {
     },
   },
   methods: {
+    async cargarProyectos() {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+          this.$router.push("/login");
+          return;
+        }
+
+        const { data } = await axios.get(`http://localhost:3000/proyectos/${userId}`);
+        this.proyectos = data;
+      } catch (error) {
+        console.error("Error al cargar los proyectos:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al cargar los proyectos.",
+        });
+      }
+    },
+    async cargarTalentos() {
+      try {
+        const { data } = await axios.get("http://localhost:3000/usuarios/habilidades");
+        this.baseTalentos = data.map((talento) => ({
+          id_habilidad: talento.id_habilidad,
+          nombre_habilidad: talento.nombre_habilidad,
+        }));
+      } catch (error) {
+        console.error("Error al cargar habilidades:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al cargar las habilidades.",
+        });
+      }
+    },
+    async mostrarColaboradores(proyecto) {
+      this.proyectoSeleccionado = proyecto;
+      this.modalColaboradores = true;
+
+      try {
+        const { data } = await axios.get(`http://localhost:3000/proyectos/${proyecto.id_proyecto}/colaboradores`);
+        this.colaboradores = data.map((colaborador) => ({
+          id_usuario: colaborador.id_usuario,
+          nombre: colaborador.nombre,
+          correo: colaborador.correo,
+          habilidades: colaborador.habilidades.map((h) => h.nombre_habilidad),
+        }));
+      } catch (error) {
+        console.error("Error al obtener colaboradores:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron cargar los colaboradores.",
+        });
+      }
+    },
+    async eliminarColaborador(id_usuario) {
+      try {
+        await axios.delete(`http://localhost:3000/proyectos/${this.proyectoSeleccionado.id_proyecto}/colaboradores/${id_usuario}`);
+        Swal.fire({
+          icon: "success",
+          title: "Eliminado",
+          text: "El colaborador fue eliminado del proyecto.",
+        });
+        this.mostrarColaboradores(this.proyectoSeleccionado); // Recargar colaboradores
+      } catch (error) {
+        console.error("Error al eliminar colaborador:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo eliminar al colaborador.",
+        });
+      }
+    },
+    cerrarModal() {
+      this.modalColaboradores = false;
+      this.proyectoSeleccionado = null;
+    },
     toggleTalento(id_habilidad, nombre_habilidad) {
       const index = this.talentoBuscado.findIndex((t) => t.id_habilidad === id_habilidad);
       if (index !== -1) {
@@ -206,41 +308,6 @@ export default {
         });
       }
     },
-    async cargarProyectos() {
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        this.$router.push("/login");
-        return;
-      }
-
-      try {
-        const { data } = await axios.get(`http://localhost:3000/proyectos/${userId}`);
-        this.proyectos = data;
-      } catch (error) {
-        console.error("Error al cargar los proyectos:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Ocurrió un error al cargar los proyectos.",
-        });
-      }
-    },
-    async cargarTalentos() {
-      try {
-        const { data } = await axios.get("http://localhost:3000/usuarios/habilidades");
-        this.baseTalentos = data.map((talento) => ({
-          id_habilidad: talento.id_habilidad,
-          nombre_habilidad: talento.nombre_habilidad,
-        }));
-      } catch (error) {
-        console.error("Error al cargar habilidades:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Ocurrió un error al cargar las habilidades.",
-        });
-      }
-    },
     limpiarFormulario() {
       this.titulo = "";
       this.descripcion = "";
@@ -248,9 +315,6 @@ export default {
       this.filtro = "";
       this.talentosMostrados = 5;
       this.proyectoEditando = null;
-    },
-    regresar() {
-      this.$router.push("/");
     },
     verMasTalentos() {
       this.talentosMostrados += 5;
@@ -270,11 +334,10 @@ export default {
   },
   mounted() {
     this.cargarProyectos();
-    this.cargarTalentos();
+    this.cargarTalentos(); // Se asegura de cargar los talentos disponibles
   },
 };
 </script>
-
 
 
 <style scoped>
@@ -330,4 +393,29 @@ h1 {
 .text-center {
   text-align: center;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* Asegúrate de que sea mayor que otros elementos */
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1051; /* Modal por encima del fondo */
+  text-align: center;
+}
+
 </style>

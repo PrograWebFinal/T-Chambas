@@ -119,6 +119,135 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.get('/:id/colaboradores', async (req, res) => {
+  const id_proyecto = req.params.id;
+
+  try {
+    const [colaboradores] = await db.promise().query(
+      `SELECT u.id_usuario, u.nombre, u.correo
+       FROM colaboradores c
+       JOIN usuarios u ON c.id_usuario = u.id_usuario
+       WHERE c.id_proyecto = ?`,
+      [id_proyecto]
+    );
+
+    for (const colaborador of colaboradores) {
+      const [habilidades] = await db.promise().query(
+        `SELECT h.nombre_habilidad 
+         FROM usuario_habilidades uh
+         JOIN habilidades h ON uh.id_habilidad = h.id_habilidad
+         WHERE uh.id_usuario = ?`,
+        [colaborador.id_usuario]
+      );
+      colaborador.habilidades = habilidades.map((h) => h.nombre_habilidad);
+    }
+
+    res.status(200).json(colaboradores);
+  } catch (error) {
+    console.error('Error al obtener colaboradores:', error);
+    res.status(500).json({ error: 'Error al obtener colaboradores.' });
+  }
+});
+
+router.delete('/:id/colaboradores/:id_usuario', async (req, res) => {
+  const { id, id_usuario } = req.params;
+
+  try {
+    await db.promise().query(
+      `DELETE FROM colaboradores WHERE id_proyecto = ? AND id_usuario = ?`,
+      [id, id_usuario]
+    );
+
+    res.status(200).json({ message: 'Colaborador eliminado con éxito.' });
+  } catch (error) {
+    console.error('Error al eliminar colaborador:', error);
+    res.status(500).json({ error: 'Error al eliminar colaborador.' });
+  }
+});
+
+// Obtener los proyectos en los que colaboras 
+router.get('/colaboradores/:id_usuario', async (req, res) => {
+  const id_usuario = req.params.id_usuario;
+
+  try {
+    const [proyectos] = await db.promise().query(
+      `SELECT p.id_proyecto, p.nombre_proyecto, p.descripcion
+       FROM colaboradores c
+       JOIN proyectos p ON c.id_proyecto = p.id_proyecto
+       WHERE c.id_usuario = ?`,
+      [id_usuario]
+    );
+
+    for (const proyecto of proyectos) {
+      const [habilidades] = await db.promise().query(
+        `SELECT h.nombre_habilidad
+         FROM proyecto_habilidades ph
+         JOIN habilidades h ON ph.id_habilidad = h.id_habilidad
+         WHERE ph.id_proyecto = ?`,
+        [proyecto.id_proyecto]
+      );
+      proyecto.habilidades = habilidades.map((h) => h.nombre_habilidad);
+    }
+
+    res.status(200).json(proyectos);
+  } catch (error) {
+    console.error('Error al obtener proyectos en los que colaboras:', error);
+    res.status(500).json({ error: 'Error al obtener proyectos en los que colaboras.' });
+  }
+});
+
+// Obtener Colaboradores de un Proyecto
+router.get('/proyectos/:id_proyecto/colaboradores', async (req, res) => {
+  const id_proyecto = req.params.id_proyecto;
+
+  try {
+    const [colaboradores] = await db.promise().query(
+      `SELECT u.id_usuario, u.nombre, u.correo
+       FROM colaboradores c
+       JOIN usuarios u ON c.id_usuario = u.id_usuario
+       WHERE c.id_proyecto = ?`,
+      [id_proyecto]
+    );
+
+    for (const colaborador of colaboradores) {
+      const [habilidades] = await db.promise().query(
+        `SELECT h.nombre_habilidad
+         FROM usuario_habilidades uh
+         JOIN habilidades h ON uh.id_habilidad = h.id_habilidad
+         WHERE uh.id_usuario = ?`,
+        [colaborador.id_usuario]
+      );
+      colaborador.habilidades = habilidades.map((h) => h.nombre_habilidad);
+    }
+
+    res.status(200).json(colaboradores);
+  } catch (error) {
+    console.error('Error al obtener colaboradores del proyecto:', error);
+    res.status(500).json({ error: 'Error al obtener colaboradores del proyecto.' });
+  }
+});
+
+
+// Salir de un proyecto como colaborador
+router.delete('/colaboradores/:id_proyecto/:id_usuario', async (req, res) => {
+  const { id_proyecto, id_usuario } = req.params;
+
+  try {
+    await db.promise().query(
+      `DELETE FROM colaboradores
+       WHERE id_proyecto = ? AND id_usuario = ?`,
+      [id_proyecto, id_usuario]
+    );
+
+    res.status(200).json({ message: 'Te has salido del proyecto con éxito.' });
+  } catch (error) {
+    console.error('Error al salir del proyecto:', error);
+    res.status(500).json({ error: 'Error al salir del proyecto.' });
+  }
+});
+
+
+
 // Reutilizar el endpoint de habilidades desde usuarios
 router.get('/habilidades', async (req, res) => {
   try {

@@ -85,6 +85,7 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 import BarraMenu from "@/components/BarraMenu.vue";
 
 export default {
@@ -94,12 +95,12 @@ export default {
   },
   data() {
     return {
-      nombre: "", // Cargado desde la API
-      biografia: "", // Cargado desde la API
-      habilidades: [], // Habilidades del usuario
+      nombre: "",
+      biografia: "",
+      habilidades: [],
       filtro: "",
       habilidadesMostradas: 5,
-      baseHabilidades: [], // Todas las habilidades disponibles
+      baseHabilidades: [],
     };
   },
   computed: {
@@ -122,13 +123,17 @@ export default {
     async guardarPerfil() {
       const userId = localStorage.getItem("userId");
       if (!userId) {
-        alert("No se ha iniciado sesión. Redirigiendo al inicio de sesión.");
-        this.$router.push("/login");
+        Swal.fire({
+          icon: "warning",
+          title: "Sesión no iniciada",
+          text: "Redirigiendo al inicio de sesión.",
+        }).then(() => {
+          this.$router.push("/login");
+        });
         return;
       }
 
       try {
-        // Actualizar habilidades
         await axios.put(`http://localhost:3000/usuarios/perfil/${userId}/habilidades`, {
           habilidades: this.habilidades.map(
             (nombre) =>
@@ -136,15 +141,22 @@ export default {
           ),
         });
 
-        // Actualizar descripción
         await axios.put(`http://localhost:3000/usuarios/perfil/${userId}/descripcion`, {
           descripcion: this.biografia,
         });
 
-        alert("Perfil actualizado con éxito.");
+        Swal.fire({
+          icon: "success",
+          title: "Perfil actualizado",
+          text: "Tu perfil se ha actualizado con éxito.",
+        });
       } catch (error) {
         console.error("Error al guardar el perfil:", error);
-        alert("Ocurrió un error al actualizar tu perfil.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al actualizar tu perfil.",
+        });
       }
     },
     regresar() {
@@ -164,25 +176,26 @@ export default {
       }
 
       try {
-        // Obtener información general del usuario
         const { data: usuario } = await axios.get(`http://localhost:3000/usuarios/perfil/${userId}`);
         this.nombre = usuario.nombre || "Usuario Anónimo";
         this.biografia = usuario.descripcion || "";
 
-        // Obtener habilidades del usuario
         const { data: habilidadesUsuario } = await axios.get(
           `http://localhost:3000/usuarios/perfil/${userId}/habilidades`
         );
         this.habilidades = habilidadesUsuario.map((h) => h.nombre_habilidad);
 
-        // Obtener todas las habilidades disponibles
         const { data: habilidadesDisponibles } = await axios.get(
           `http://localhost:3000/usuarios/habilidades`
         );
         this.baseHabilidades = habilidadesDisponibles;
       } catch (error) {
         console.error("Error al cargar datos del usuario:", error);
-        alert("Ocurrió un error al cargar tu perfil.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al cargar tu perfil.",
+        });
       }
     },
   },
@@ -191,6 +204,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .perfil-container {

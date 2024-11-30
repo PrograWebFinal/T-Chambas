@@ -10,13 +10,13 @@
       <!-- Cuadro de búsqueda -->
       <input
         type="text"
-        placeholder="Buscar por nombre o habilidades"
+        placeholder="Buscar por nombre, habilidades o carrera"
         v-model="searchQuery"
         class="form-control mb-4"
       />
 
       <!-- Botones de habilidades más buscadas -->
-      <div class="habilidades-populares">
+      <div class="habilidades-populares mb-3">
         <button
           v-for="habilidad in habilidadesPopulares"
           :key="habilidad"
@@ -30,38 +30,36 @@
       <!-- Perfiles de alumnos en hileras -->
       <div class="perfiles-alumnos">
         <div v-for="(fila, index) in filasPerfiles" :key="index" class="row mb-4">
-          <!-- Renderizar cada perfil en la hilera -->
           <div
             v-for="perfil in fila"
             :key="perfil.id_usuario"
             class="col-md-3 text-center"
-            @click="seleccionarPerfil(perfil)"
           >
-            <div class="perfil">
+            <div class="perfil" @click="seleccionarPerfil(perfil)">
               <img :src="perfil.foto || defaultFoto" alt="Foto de perfil" class="foto-perfil" />
               <h3 class="mt-2">{{ perfil.nombre }}</h3>
               <p>Habilidades: {{ perfil.habilidades }}</p>
               <div v-if="perfilSeleccionado === perfil" class="flecha-abajo">⬇️</div>
             </div>
-          </div>
-        </div>
 
-        <!-- Ficha técnica -->
-        <div
-          v-if="perfilSeleccionado"
-          class="ficha-tecnica"
-        >
-          <img
-            :src="perfilSeleccionado.foto || defaultFoto"
-            alt="Foto del perfil"
-            class="ficha-foto-perfil"
-          />
-          <div class="ficha-detalles">
-            <h2>{{ perfilSeleccionado.nombre }}</h2>
-            <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
-            <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
-            <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
-            <button class="btn btn-success">Conectar o Invitar</button>
+            <!-- Ficha técnica debajo del perfil seleccionado -->
+            <div
+              v-if="perfilSeleccionado === perfil"
+              class="ficha-tecnica mt-3 p-3 border rounded"
+            >
+              <img
+                :src="perfilSeleccionado.foto || defaultFoto"
+                alt="Foto del perfil"
+                class="ficha-foto-perfil mb-2"
+              />
+              <div class="ficha-detalles">
+                <h4>{{ perfilSeleccionado.nombre }}</h4>
+                <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
+                <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
+                <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
+                <button class="btn btn-success mt-2">Conectar o Invitar</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -90,8 +88,8 @@ export default {
         "Gestión de Proyectos",
         "Contabilidad",
       ],
-      perfiles: [], // Lista de perfiles cargados
-      defaultFoto, // Foto predeterminada
+      perfiles: [],
+      defaultFoto,
     };
   },
   computed: {
@@ -101,7 +99,8 @@ export default {
       return this.perfiles.filter(
         (perfil) =>
           perfil.nombre.toLowerCase().includes(query) ||
-          perfil.habilidades.toLowerCase().includes(query)
+          perfil.habilidades.toLowerCase().includes(query) ||
+          perfil.carrera.toLowerCase().includes(query)
       );
     },
     filasPerfiles() {
@@ -116,7 +115,6 @@ export default {
     async cargarPerfiles() {
       try {
         const userId = localStorage.getItem("userId");
-
         if (!userId) {
           console.error("No se encontró userId en localStorage.");
           this.$router.push("/login");
@@ -147,13 +145,12 @@ export default {
     },
   },
   mounted() {
-    this.cargarPerfiles(); // Cargar perfiles al montar el componente
+    this.cargarPerfiles();
   },
 };
 </script>
 
-
-<style>
+<style scoped>
 .buscar-companeros {
   padding: 20px;
 }
@@ -179,5 +176,83 @@ export default {
 .flecha-abajo {
   font-size: 20px;
   color: #007bff;
+}
+.buscar-companeros {
+  padding: 20px;
+}
+
+.foto-perfil {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #007bff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ficha-tecnica {
+  background-color: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.ficha-foto-perfil {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #28a745;
+  box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.ficha-detalles h4 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.ficha-detalles p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.ficha-detalles strong {
+  color: #007bff;
+}
+
+.ficha-detalles button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.ficha-detalles button:hover {
+  background-color: #218838;
+}
+
+.flecha-abajo {
+  font-size: 1.5rem;
+  color: #007bff;
+  margin-top: 5px;
+}
+
+.habilidades-populares button {
+  margin-bottom: 5px;
+}
+
+.habilidades-populares button:hover {
+  background-color: #007bff;
+  color: white;
 }
 </style>

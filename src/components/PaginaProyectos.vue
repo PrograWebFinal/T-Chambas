@@ -6,7 +6,9 @@
     <!-- Contenido principal -->
     <div class="explora-proyectos container mt-4">
       <h1 class="text-center mb-2">Explora Proyectos</h1>
-      <p class="text-center text-muted mb-4">Descubre proyectos emocionantes, busca por habilidades o explora nuestras recomendaciones.</p>
+      <p class="text-center text-muted mb-4">
+        Descubre proyectos emocionantes, busca por habilidades o explora nuestras recomendaciones.
+      </p>
 
       <!-- Cuadro de búsqueda -->
       <input
@@ -44,17 +46,13 @@
 
       <!-- Lista de proyectos -->
       <div class="proyectos" v-else>
-        <div
-          v-for="(fila, index) in filasProyectos"
-          :key="index"
-          class="row mb-4"
-        >
+        <div v-for="(fila, index) in filasProyectos" :key="index" class="row mb-4">
           <div
             v-for="proyecto in fila"
             :key="proyecto.id_proyecto"
             class="col-sm-12 col-md-6 col-lg-4"
           >
-            <div class="proyecto card h-100" @click="seleccionarProyecto(proyecto)">
+            <div class="proyecto card h-100">
               <img
                 v-if="proyecto.imagen"
                 :src="proyecto.imagen"
@@ -65,11 +63,18 @@
               <div class="card-body">
                 <h3 class="card-title">{{ proyecto.titulo }}</h3>
                 <p class="card-text">
-                  <span class="badge bg-secondary me-1" v-for="habilidad in proyecto.habilidades" :key="habilidad.id_habilidad">
+                  <span
+                    class="badge bg-secondary me-1"
+                    v-for="habilidad in proyecto.habilidades"
+                    :key="habilidad.id_habilidad"
+                  >
                     {{ habilidad.nombre_habilidad }}
                   </span>
                 </p>
                 <p class="card-text text-muted">{{ proyecto.descripcion }}</p>
+                <button class="btn btn-success mt-2" @click="unirseProyecto(proyecto.id_proyecto)">
+                  Unirse al Proyecto
+                </button>
               </div>
             </div>
           </div>
@@ -99,6 +104,7 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 import BarraMenu from "@/components/BarraMenu.vue";
 
 export default {
@@ -110,7 +116,7 @@ export default {
     return {
       searchQuery: "",
       habilidadesPopulares: ["Programación", "Diseño Gráfico", "Marketing", "Gestión de Proyectos"],
-      proyectos: [], // Inicialmente vacío
+      proyectos: [],
       paginaActual: 1,
       elementosPorPagina: 6,
       cargando: false,
@@ -151,8 +157,13 @@ export default {
         const userId = localStorage.getItem("userId");
 
         if (!userId) {
-          console.error("No se encontró userId en localStorage.");
-          this.$router.push("/login");
+          Swal.fire({
+            icon: "warning",
+            title: "Sesión caducada",
+            text: "Tu sesión ha caducado. Inicia sesión nuevamente.",
+          }).then(() => {
+            this.$router.push("/login");
+          });
           return;
         }
 
@@ -169,6 +180,11 @@ export default {
         }));
       } catch (error) {
         console.error("Error al cargar proyectos:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un problema al cargar los proyectos. Inténtalo más tarde.",
+        });
       } finally {
         this.cargando = false;
       }
@@ -176,8 +192,38 @@ export default {
     buscarPorHabilidad(habilidad) {
       this.searchQuery = habilidad;
     },
-    seleccionarProyecto(proyecto) {
-      this.$router.push({ name: "Detalles_proyectos", params: { proyecto: JSON.stringify(proyecto) } });
+    async unirseProyecto(idProyecto) {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          Swal.fire({
+            icon: "warning",
+            title: "Sesión caducada",
+            text: "Tu sesión ha caducado. Inicia sesión nuevamente.",
+          }).then(() => {
+            this.$router.push("/login");
+          });
+          return;
+        }
+
+        await axios.post(`http://localhost:3000/proyectos/${idProyecto}/unirse`, {
+          userId,
+        });
+
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Te has unido exitosamente al proyecto.",
+        });
+      } catch (error) {
+        console.error("Error al unirse al proyecto:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo unir al proyecto. Inténtalo de nuevo.",
+        });
+      }
     },
     cambiarPagina(pagina) {
       this.paginaActual = pagina;
@@ -189,7 +235,7 @@ export default {
     },
   },
   mounted() {
-    this.cargarProyectos(); // Cargar proyectos al montar el componente
+    this.cargarProyectos();
   },
 };
 </script>

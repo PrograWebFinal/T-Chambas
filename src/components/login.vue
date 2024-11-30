@@ -125,12 +125,13 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
   name: "LoginRegister",
   data() {
     return {
-      activeTab: "login", // Controla qué formulario mostrar
+      activeTab: "login", 
       loginData: {
         email: "",
         password: "",
@@ -140,9 +141,9 @@ export default {
         lastName: "",
         email: "",
         password: "",
-        career: "", // ID de la carrera seleccionada
+        career: "", 
       },
-      carreras: [], // Lista de carreras cargadas desde el backend
+      carreras: [], 
     };
   },
   methods: {
@@ -153,7 +154,12 @@ export default {
         console.log("Carreras cargadas:", this.carreras);
       } catch (error) {
         console.error("Error al cargar carreras:", error);
-        alert("Error al cargar las carreras.");
+        Swal.fire({
+          title: "Error",
+          text: "Error al cargar las carreras.",
+          icon: "error",
+          confirmButtonText: "Entendido",
+        });
       }
     },
     async login() {
@@ -164,7 +170,13 @@ export default {
         });
 
         console.log("Inicio de sesión exitoso:", response.data);
-        alert("Inicio de sesión exitoso");
+
+        Swal.fire({
+          title: "¡Éxito!",
+          text: "Inicio de sesión exitoso.",
+          icon: "success",
+          confirmButtonText: "Continuar",
+        });
 
         // Guardar el ID del usuario en localStorage
         localStorage.setItem("userId", response.data.user.id_usuario);
@@ -177,7 +189,12 @@ export default {
         const errorMessage = error.response
           ? error.response.data.error
           : "Error inesperado al iniciar sesión.";
-        alert(errorMessage);
+        Swal.fire({
+          title: "Error",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonText: "Reintentar",
+        });
       }
     },
     async register() {
@@ -192,13 +209,24 @@ export default {
         });
 
         console.log("Usuario registrado exitosamente:", response.data);
-        alert("Usuario registrado exitosamente");
+
+        Swal.fire({
+          title: "¡Éxito!",
+          text: "Usuario registrado exitosamente.",
+          icon: "success",
+          confirmButtonText: "Entendido",
+        });
       } catch (error) {
         console.error("Error al registrar usuario:", error);
         const errorMessage = error.response
           ? error.response.data.error
           : "Error inesperado al registrar usuario.";
-        alert(errorMessage);
+        Swal.fire({
+          title: "Error",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonText: "Reintentar",
+        });
       }
     },
   },
@@ -207,6 +235,7 @@ export default {
   },
 };
 </script>
+
 
   <style scoped>
   .container {

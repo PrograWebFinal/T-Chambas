@@ -109,6 +109,7 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 import BarraMenu from "@/components/BarraMenu.vue";
 
 export default {
@@ -139,11 +140,10 @@ export default {
     toggleTalento(id_habilidad, nombre_habilidad) {
       const index = this.talentoBuscado.findIndex((t) => t.id_habilidad === id_habilidad);
       if (index !== -1) {
-        this.talentoBuscado.splice(index, 1); // Eliminar si ya está seleccionado
+        this.talentoBuscado.splice(index, 1);
       } else {
-        this.talentoBuscado.push({ id_habilidad, nombre_habilidad }); // Agregar si no está
+        this.talentoBuscado.push({ id_habilidad, nombre_habilidad });
       }
-      console.log("Talentos seleccionados:", this.talentoBuscado); // Verifica los cambios
     },
     async publicarProyecto() {
       const userId = localStorage.getItem("userId");
@@ -154,38 +154,56 @@ export default {
 
       try {
         if (this.proyectoEditando) {
-          // Actualizar proyecto
           await axios.put(`http://localhost:3000/proyectos/${this.proyectoEditando.id_proyecto}`, {
             nombre_proyecto: this.titulo,
             descripcion: this.descripcion,
             habilidades: this.talentoBuscado.map((t) => t.id_habilidad),
           });
-          alert("Proyecto actualizado con éxito.");
+          Swal.fire({
+            icon: "success",
+            title: "Proyecto actualizado",
+            text: "El proyecto se ha actualizado con éxito.",
+          });
         } else {
-          // Crear nuevo proyecto
           await axios.post("http://localhost:3000/proyectos", {
             nombre_proyecto: this.titulo,
             descripcion: this.descripcion,
             id_usuario_creador: userId,
             habilidades: this.talentoBuscado.map((t) => t.id_habilidad),
           });
-          alert("Proyecto creado con éxito.");
+          Swal.fire({
+            icon: "success",
+            title: "Proyecto creado",
+            text: "El proyecto se ha creado con éxito.",
+          });
         }
         this.limpiarFormulario();
         this.cargarProyectos();
       } catch (error) {
         console.error("Error al guardar el proyecto:", error);
-        alert("Ocurrió un error al guardar el proyecto.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al guardar el proyecto.",
+        });
       }
     },
     async eliminarProyecto(id_proyecto) {
       try {
         await axios.delete(`http://localhost:3000/proyectos/${id_proyecto}`);
-        alert("Proyecto eliminado con éxito.");
+        Swal.fire({
+          icon: "success",
+          title: "Proyecto eliminado",
+          text: "El proyecto se ha eliminado con éxito.",
+        });
         this.cargarProyectos();
       } catch (error) {
         console.error("Error al eliminar el proyecto:", error);
-        alert("Ocurrió un error al eliminar el proyecto.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al eliminar el proyecto.",
+        });
       }
     },
     async cargarProyectos() {
@@ -200,20 +218,27 @@ export default {
         this.proyectos = data;
       } catch (error) {
         console.error("Error al cargar los proyectos:", error);
-        alert("Ocurrió un error al cargar los proyectos.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al cargar los proyectos.",
+        });
       }
     },
     async cargarTalentos() {
       try {
         const { data } = await axios.get("http://localhost:3000/usuarios/habilidades");
-        console.log("Habilidades cargadas:", data); // Verificar la estructura
         this.baseTalentos = data.map((talento) => ({
           id_habilidad: talento.id_habilidad,
           nombre_habilidad: talento.nombre_habilidad,
         }));
       } catch (error) {
         console.error("Error al cargar habilidades:", error);
-        alert("Ocurrió un error al cargar las habilidades.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al cargar las habilidades.",
+        });
       }
     },
     limpiarFormulario() {
@@ -249,6 +274,7 @@ export default {
   },
 };
 </script>
+
 
 
 <style scoped>

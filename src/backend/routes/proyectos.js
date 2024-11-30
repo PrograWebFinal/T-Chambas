@@ -139,6 +139,7 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "El ID del usuario es requerido." });
     }
 
+    // Consulta para obtener proyectos, excluyendo los creados por el usuario actual
     const [proyectos] = await db.promise().query(
       `SELECT 
          p.id_proyecto, 
@@ -149,6 +150,7 @@ router.get("/", async (req, res) => {
       [usuarioActualId]
     );
 
+    // Obtener las habilidades para cada proyecto
     for (const proyecto of proyectos) {
       const [habilidades] = await db.promise().query(
         `SELECT h.id_habilidad, h.nombre_habilidad
@@ -160,6 +162,7 @@ router.get("/", async (req, res) => {
       proyecto.habilidades = habilidades;
     }
 
+    // Enviar los proyectos con el `id_proyecto` incluido
     res.status(200).json(proyectos);
   } catch (error) {
     console.error("Error al obtener proyectos:", error);
@@ -167,50 +170,79 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+
+router.get("/:id", async (req, res) => {
+  const { id } = req.params; // ID del proyecto
   try {
-    // Obtener detalles del proyecto
-    const [proyectos] = await db.promise().query(
-      `SELECT id_proyecto, nombre_proyecto, descripcion 
-       FROM proyectos
-       WHERE id_proyecto = ?`,
+    // Obtener los detalles del proyecto
+    const [proyecto] = await db.promise().query(
+      `SELECT 
+         p.id_proyecto, 
+         p.nombre_proyecto, 
+         p.descripcion, 
+         u.nombre AS creador_nombre, 
+         u.apellidos AS creador_apellidos
+       FROM proyectos p
+       JOIN usuarios u ON p.id_usuario_creador = u.id_usuario
+       WHERE p.id_proyecto = ?`,
       [id]
     );
 
-    if (proyectos.length === 0) {
-      return res.status(404).json({ error: "Proyecto no encontrado" });
+    // Validar si el proyecto existe
+    if (proyecto.length === 0) {
+      return res.status(404).json({ error: "Proyecto no encontrado." });
     }
 
-    const proyecto = proyectos[0];
-
-    // Obtener habilidades del proyecto
-    const [habilidades] = await db.promise().query(
-      `SELECT h.id_habilidad, h.nombre_habilidad
-       FROM proyecto_habilidades ph
-       JOIN habilidades h ON ph.id_habilidad = h.id_habilidad
-       WHERE ph.id_proyecto = ?`,
+    // Obtener los colaboradores del proyecto
+    const [colaboradores] = await db.promise().query(
+      `SELECT 
+         u.id_usuario, 
+         u.nombre, 
+         u.apellidos, 
+         u.descripcion 
+       FROM colaboradores c
+       JOIN usuarios u ON c.id_usuario = u.id_usuario
+       WHERE c.id_proyecto = ?`,
       [id]
     );
 
-    // Obtener integrantes
-    const [integrantes] = await db.promise().query(
-      `SELECT u.id_usuario, u.nombre, u.carrera, u.descripcion
-       FROM proyecto_integrantes pi
-       JOIN usuarios u ON pi.id_usuario = u.id_usuario
-       WHERE pi.id_proyecto = ?`,
-      [id]
-    );
-
-    proyecto.habilidades = habilidades;
-    proyecto.integrantes = integrantes;
-    proyecto.imagenes = []; // Opcional: agrega lógica para imágenes si las tienes
-
-    res.status(200).json(proyecto);
+    res.status(200).json({
+      ...proyecto[0],
+      colaboradores,
+    });
   } catch (error) {
-    console.error('Error al obtener detalles del proyecto:', error);
-    res.status(500).json({ error: 'Error al obtener detalles del proyecto.' });
+    console.error("Error al obtener los detalles del proyecto:", error);
+    res.status(500).json({ error: "Error interno al obtener los detalles del proyecto." });
   }
 });
+
+router.post("/:id/unirse", async (req, res) => {
+  const { id } = req.params; // ID del proyecto
+  const { userId } = req.body; // ID del usuario que desea unirse
+
+  try {
+    // Validar si el usuario ya es colaborador
+    const [existe] = await db.promise().query(
+      `SELECT 1 FROM colaboradores WHERE id_usuario = ? AND id_proyecto = ?`,
+      [userId, id]
+    );
+
+    if (existe.length > 0) {
+      return res.status(400).json({ error: "El usuario ya es colaborador de este proyecto." });
+    }
+
+    // Insertar el usuario como colaborador
+    await db.promise().query(
+      `INSERT INTO colaboradores (id_usuario, id_proyecto) VALUES (?, ?)`,
+      [userId, id]
+    );
+
+    res.status(200).json({ message: "Te has unido exitosamente al proyecto." });
+  } catch (error) {
+    console.error("Error al unirse al proyecto:", error);
+    res.status(500).json({ error: "Error interno al unirse al proyecto." });
+  }
+});
+
 
 module.exports = router;

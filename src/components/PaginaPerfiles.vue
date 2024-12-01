@@ -6,6 +6,9 @@
     <!-- Contenido principal -->
     <div class="buscar-companeros">
       <h1 class="text-center">Busca Compañeros</h1>
+      <p class="text-center text-muted mb-4">
+        Descubre compañeros de trabajo para tus proyectos.
+      </p>
 
       <!-- Cuadro de búsqueda -->
       <input
@@ -31,11 +34,6 @@
       <div class="row">
         <div v-for="perfil in perfilesFiltrados" :key="perfil.id_usuario" class="col-md-4 col-lg-3 mb-4">
           <div class="card perfil-card" @click="abrirModal(perfil)">
-            <img
-              :src="perfil.foto || defaultFoto"
-              alt="Foto de perfil"
-              class="card-img-top perfil-imagen"
-            />
             <div class="card-body text-center">
               <h5 class="card-title">{{ perfil.nombre }}</h5>
               <p class="card-text"><strong>Carrera:</strong> {{ perfil.carrera }}</p>
@@ -49,11 +47,6 @@
       <div v-if="mostrarModal && perfilSeleccionado" class="modal-backdrop">
         <div class="modal-content">
           <h2>{{ perfilSeleccionado.nombre }}</h2>
-          <img
-            :src="perfilSeleccionado.foto || defaultFoto"
-            alt="Foto del perfil"
-            class="modal-foto-perfil mb-3"
-          />
           <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
           <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
           <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
@@ -90,7 +83,6 @@
 import axios from "axios";
 import Swal from "sweetalert2";
 import BarraMenu from "@/components/BarraMenu.vue";
-import defaultFoto from "../assets/Perfiles/Juan.jpg";
 
 export default {
   name: "PaginaBuscarCompaneros",
@@ -104,7 +96,6 @@ export default {
       habilidadesPopulares: [],
       perfiles: [],
       proyectos: [], // Almacena los proyectos creados por el usuario
-      defaultFoto,
       mostrarModal: false, // Controla la visibilidad del modal
       proyectoSeleccionado: null, // Proyecto seleccionado para invitar
     };
@@ -138,7 +129,6 @@ export default {
         this.perfiles = response.data.map((usuario) => ({
           id_usuario: usuario.id_usuario,
           nombre: usuario.nombre,
-          foto: usuario.foto || null,
           carrera: usuario.carrera || "No especificado",
           habilidades: usuario.habilidades || "Sin habilidades",
           descripcion: usuario.descripcion || "Sin descripción",

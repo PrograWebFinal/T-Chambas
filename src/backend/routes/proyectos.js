@@ -325,6 +325,7 @@ router.get('/habilidades', async (req, res) => {
 });
 
 // Obtener todos los proyectos
+// Obtener todos los proyectos excluyendo los del usuario actual y los que ya colabora
 router.get("/", async (req, res) => {
   try {
     const usuarioActualId = req.query.userId;
@@ -333,15 +334,20 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "El ID del usuario es requerido." });
     }
 
-    // Consulta para obtener proyectos, excluyendo los creados por el usuario actual
+    // Consulta para obtener proyectos, excluyendo los creados por el usuario actual y los que ya colabora
     const [proyectos] = await db.promise().query(
       `SELECT 
          p.id_proyecto, 
          p.nombre_proyecto, 
          IFNULL(p.descripcion, 'Sin descripción') AS descripcion
        FROM proyectos p
-       WHERE p.id_usuario_creador != ?`,
-      [usuarioActualId]
+       WHERE p.id_usuario_creador != ?
+         AND p.id_proyecto NOT IN (
+           SELECT c.id_proyecto
+           FROM colaboradores c
+           WHERE c.id_usuario = ?
+         )`,
+      [usuarioActualId, usuarioActualId]
     );
 
     // Obtener las habilidades para cada proyecto
@@ -361,6 +367,35 @@ router.get("/", async (req, res) => {
   } catch (error) {
     console.error("Error al obtener proyectos:", error);
     res.status(500).json({ error: "Error al obtener proyectos." });
+  }
+});
+
+
+
+// Obtener proyectos en los que el usuario ya está colaborando
+router.get("/colaborando/:userId", async (req, res) => {
+  try {
+    const usuarioActualId = req.params.userId; // Obtener el userId de los parámetros de la ruta
+
+    if (!usuarioActualId) {
+      return res.status(400).json({ error: "El ID del usuario es requerido." });
+    }
+
+    const [proyectos] = await db.promise().query(
+      `SELECT 
+         p.id_proyecto, 
+         p.nombre_proyecto, 
+         IFNULL(p.descripcion, 'Sin descripción') AS descripcion
+       FROM proyectos p
+       JOIN colaboradores c ON p.id_proyecto = c.id_proyecto
+       WHERE c.id_usuario = ?`,
+      [usuarioActualId]
+    );
+
+    res.status(200).json(proyectos);
+  } catch (error) {
+    console.error("Error al obtener proyectos en los que colaboras:", error);
+    res.status(500).json({ error: "Error al obtener proyectos en los que colaboras." });
   }
 });
 

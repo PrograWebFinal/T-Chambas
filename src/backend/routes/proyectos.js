@@ -165,6 +165,37 @@ router.delete('/:id/colaboradores/:id_usuario', async (req, res) => {
   }
 });
 
+// Obtener información del dueño del proyecto
+router.get('/:id/jefe', async (req, res) => {
+  const id_proyecto = req.params.id;
+
+  try {
+    // Consulta para obtener el dueño del proyecto
+    const [result] = await db.promise().query(
+      `SELECT 
+         u.nombre, 
+         u.correo, 
+         c.nombre_carrera AS carrera
+       FROM proyectos p
+       JOIN usuarios u ON p.id_usuario_creador = u.id_usuario
+       LEFT JOIN carreras c ON u.id_carrera = c.id_carrera
+       WHERE p.id_proyecto = ?`,
+      [id_proyecto]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Proyecto no encontrado o sin dueño asociado.' });
+    }
+
+    // Retornar el dueño del proyecto
+    res.status(200).json(result[0]);
+  } catch (error) {
+    console.error('Error al obtener el dueño del proyecto:', error);
+    res.status(500).json({ error: 'Error al obtener el dueño del proyecto.' });
+  }
+});
+
+
 // Obtener los proyectos en los que colaboras 
 router.get('/colaboradores/:id_usuario', async (req, res) => {
   const id_usuario = req.params.id_usuario;

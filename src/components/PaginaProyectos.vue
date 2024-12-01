@@ -62,22 +62,34 @@
               />
               <div class="card-body">
                 <h3 class="card-title">{{ proyecto.titulo }}</h3>
-                <p class="card-text">
-                  <span
-                    class="badge bg-secondary me-1"
-                    v-for="habilidad in proyecto.habilidades"
-                    :key="habilidad.id_habilidad"
-                  >
-                    {{ habilidad.nombre_habilidad }}
-                  </span>
-                </p>
-                <p class="card-text text-muted">{{ proyecto.descripcion }}</p>
-                <button class="btn btn-success mt-2" @click="unirseProyecto(proyecto.id_proyecto)">
-                  Unirse al Proyecto
+                <button class="btn btn-info mt-2" @click="abrirModal(proyecto)">
+                  Ver Detalles
                 </button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal para detalles del proyecto -->
+      <div v-if="mostrarModal && proyectoSeleccionado" class="modal-backdrop">
+        <div class="modal-content">
+          <h2>{{ proyectoSeleccionado.titulo }}</h2>
+          <p><strong>Descripción:</strong> {{ proyectoSeleccionado.descripcion }}</p>
+          <p><strong>Habilidades requeridas:</strong></p>
+          <ul>
+            <li v-for="habilidad in proyectoSeleccionado.habilidades" :key="habilidad.id_habilidad">
+              {{ habilidad.nombre_habilidad }}
+            </li>
+          </ul>
+          <p><strong>Dueño del proyecto:</strong></p>
+          <p><strong>Nombre:</strong> {{ dueñoProyecto?.nombre || 'Desconocido' }}</p>
+          <p><strong>Carrera:</strong> {{ dueñoProyecto?.carrera || 'Desconocida' }}</p>
+          <p><strong>Correo:</strong> {{ dueñoProyecto?.correo || 'No disponible' }}</p>
+          <button class="btn btn-success mt-2" @click="unirseProyecto(proyectoSeleccionado.id_proyecto)">
+            Unirse al Proyecto
+          </button>
+          <button class="btn btn-secondary mt-2" @click="cerrarModal">Cerrar</button>
         </div>
       </div>
 
@@ -115,11 +127,14 @@ export default {
   data() {
     return {
       searchQuery: "",
-      habilidadesPopulares: ["Programación", "Diseño Gráfico", "Marketing", "Gestión de Proyectos"],
+      habilidadesPopulares: [],
       proyectos: [],
       paginaActual: 1,
       elementosPorPagina: 6,
       cargando: false,
+      mostrarModal: false, // Controla la visibilidad del modal
+      proyectoSeleccionado: null, // Almacena el proyecto seleccionado
+      dueñoProyecto: null, // Información del dueño del proyecto
     };
   },
   computed: {
@@ -192,6 +207,31 @@ export default {
     buscarPorHabilidad(habilidad) {
       this.searchQuery = habilidad;
     },
+    async abrirModal(proyecto) {
+      this.proyectoSeleccionado = proyecto;
+      this.mostrarModal = true;
+
+      try {
+        const { data } = await axios.get(`http://localhost:3000/proyectos/${proyecto.id_proyecto}/jefe`);
+        this.dueñoProyecto = {
+          nombre: data.nombre,
+          carrera: data.carrera,
+          correo: data.correo,
+        };
+      } catch (error) {
+        console.error("Error al cargar el dueño del proyecto:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cargar la información del dueño del proyecto.",
+        });
+      }
+    },
+    cerrarModal() {
+      this.mostrarModal = false;
+      this.proyectoSeleccionado = null;
+      this.dueñoProyecto = null;
+    },
     async unirseProyecto(idProyecto) {
       try {
         const userId = localStorage.getItem("userId");
@@ -216,6 +256,7 @@ export default {
           title: "Éxito",
           text: "Te has unido exitosamente al proyecto.",
         });
+        this.cerrarModal();
       } catch (error) {
         console.error("Error al unirse al proyecto:", error);
         Swal.fire({
@@ -240,7 +281,6 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .explora-proyectos {
   max-width: 1200px;
@@ -262,4 +302,26 @@ export default {
 .pagination-container button {
   margin: 0 5px;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+}
+
 </style>

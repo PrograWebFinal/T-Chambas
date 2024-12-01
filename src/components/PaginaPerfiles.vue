@@ -27,40 +27,59 @@
         </button>
       </div>
 
-      <!-- Perfiles de alumnos en hileras -->
-      <div class="perfiles-alumnos">
-        <div v-for="(fila, index) in filasPerfiles" :key="index" class="row mb-4">
-          <div
-            v-for="perfil in fila"
-            :key="perfil.id_usuario"
-            class="col-md-3 text-center"
-          >
-            <div class="perfil" @click="seleccionarPerfil(perfil)">
-              <img :src="perfil.foto || defaultFoto" alt="Foto de perfil" class="foto-perfil" />
-              <h3 class="mt-2">{{ perfil.nombre }}</h3>
-              <p>Habilidades: {{ perfil.habilidades }}</p>
-              <div v-if="perfilSeleccionado === perfil" class="flecha-abajo">⬇️</div>
-            </div>
-
-            <!-- Ficha técnica debajo del perfil seleccionado -->
-            <div
-              v-if="perfilSeleccionado === perfil"
-              class="ficha-tecnica mt-3 p-3 border rounded"
-            >
-              <img
-                :src="perfilSeleccionado.foto || defaultFoto"
-                alt="Foto del perfil"
-                class="ficha-foto-perfil mb-2"
-              />
-              <div class="ficha-detalles">
-                <h4>{{ perfilSeleccionado.nombre }}</h4>
-                <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
-                <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
-                <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
-                <button class="btn btn-success mt-2">Conectar o Invitar</button>
-              </div>
+      <!-- Perfiles de alumnos en paneles -->
+      <div class="row">
+        <div v-for="perfil in perfilesFiltrados" :key="perfil.id_usuario" class="col-md-4 col-lg-3 mb-4">
+          <div class="card perfil-card" @click="abrirModal(perfil)">
+            <img
+              :src="perfil.foto || defaultFoto"
+              alt="Foto de perfil"
+              class="card-img-top perfil-imagen"
+            />
+            <div class="card-body text-center">
+              <h5 class="card-title">{{ perfil.nombre }}</h5>
+              <p class="card-text"><strong>Carrera:</strong> {{ perfil.carrera }}</p>
+              <button class="btn btn-info mt-2">Ver Detalles</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal para Ficha Técnica -->
+      <div v-if="mostrarModal && perfilSeleccionado" class="modal-backdrop">
+        <div class="modal-content">
+          <h2>{{ perfilSeleccionado.nombre }}</h2>
+          <img
+            :src="perfilSeleccionado.foto || defaultFoto"
+            alt="Foto del perfil"
+            class="modal-foto-perfil mb-3"
+          />
+          <p><strong>Carrera:</strong> {{ perfilSeleccionado.carrera }}</p>
+          <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
+          <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
+
+          <!-- Selección de proyecto -->
+          <div class="mt-3">
+            <label for="proyectoSeleccionado" class="form-label">Selecciona un proyecto:</label>
+            <select
+              id="proyectoSeleccionado"
+              v-model="proyectoSeleccionado"
+              class="form-select mb-3"
+            >
+              <option v-for="proyecto in proyectos" :key="proyecto.id_proyecto" :value="proyecto.id_proyecto">
+                {{ proyecto.nombre_proyecto }}
+              </option>
+            </select>
+            <button
+              class="btn btn-success"
+              @click="confirmarInvitacion"
+              :disabled="!proyectoSeleccionado"
+            >
+              Invitar al Proyecto
+            </button>
+          </div>
+
+          <button class="btn btn-secondary mt-3" @click="cerrarModal">Cerrar</button>
         </div>
       </div>
     </div>
@@ -69,6 +88,7 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 import BarraMenu from "@/components/BarraMenu.vue";
 import defaultFoto from "../assets/Perfiles/Juan.jpg";
 
@@ -81,15 +101,12 @@ export default {
     return {
       searchQuery: "",
       perfilSeleccionado: null,
-      habilidadesPopulares: [
-        "Programación",
-        "Fotografía",
-        "Marketing",
-        "Gestión de Proyectos",
-        "Contabilidad",
-      ],
+      habilidadesPopulares: [],
       perfiles: [],
+      proyectos: [], // Almacena los proyectos creados por el usuario
       defaultFoto,
+      mostrarModal: false, // Controla la visibilidad del modal
+      proyectoSeleccionado: null, // Proyecto seleccionado para invitar
     };
   },
   computed: {
@@ -102,13 +119,6 @@ export default {
           perfil.habilidades.toLowerCase().includes(query) ||
           perfil.carrera.toLowerCase().includes(query)
       );
-    },
-    filasPerfiles() {
-      const filas = [];
-      for (let i = 0; i < this.perfilesFiltrados.length; i += 4) {
-        filas.push(this.perfilesFiltrados.slice(i, i + 4));
-      }
-      return filas;
     },
   },
   methods: {
@@ -137,20 +147,97 @@ export default {
         console.error("Error al cargar perfiles:", error);
       }
     },
+    async cargarProyectos() {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+          this.$router.push("/login");
+          return;
+        }
+
+        const { data } = await axios.get(`http://localhost:3000/proyectos/${userId}`);
+        this.proyectos = data;
+      } catch (error) {
+        console.error("Error al cargar proyectos:", error);
+      }
+    },
     buscarPorHabilidad(habilidad) {
       this.searchQuery = habilidad;
     },
-    seleccionarPerfil(perfil) {
-      this.perfilSeleccionado = this.perfilSeleccionado === perfil ? null : perfil;
+    abrirModal(perfil) {
+      this.perfilSeleccionado = perfil;
+      this.mostrarModal = true;
+    },
+    cerrarModal() {
+      this.mostrarModal = false;
+      this.perfilSeleccionado = null;
+      this.proyectoSeleccionado = null;
+    },
+    async confirmarInvitacion() {
+      try {
+        const { id_usuario } = this.perfilSeleccionado;
+        const id_proyecto = this.proyectoSeleccionado;
+
+        // Confirmación con SweetAlert2
+        const result = await Swal.fire({
+          title: "¿Estás seguro?",
+          text: `¿Quieres invitar a ${this.perfilSeleccionado.nombre} al proyecto seleccionado?`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Sí, invitar",
+          cancelButtonText: "Cancelar",
+        });
+
+        if (result.isConfirmed) {
+          await axios.post(`http://localhost:3000/proyectos/${id_proyecto}/invitar`, {
+            id_usuario,
+          });
+
+          Swal.fire({
+            icon: "success",
+            title: "Invitación enviada",
+            text: `${this.perfilSeleccionado.nombre} ha sido invitado al proyecto.`,
+          });
+
+          this.cerrarModal();
+        }
+      } catch (error) {
+        console.error("Error al invitar al usuario:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al invitar al usuario al proyecto.",
+        });
+      }
     },
   },
   mounted() {
     this.cargarPerfiles();
+    this.cargarProyectos(); // Cargar los proyectos creados por el usuario
   },
 };
 </script>
 
 <style scoped>
+/* Estilos de los paneles */
+.perfil-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.perfil-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.perfil-imagen {
+  width: 100%;
+  height: 150px;
+  object-fit: cover; /* Evita la deformación de la imagen */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
 .buscar-companeros {
   padding: 20px;
 }
@@ -255,4 +342,38 @@ export default {
   background-color: #007bff;
   color: white;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.modal-foto-perfil {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  object-fit: cover; /* Asegura que la imagen no se deforme */
+  display: block;
+  margin: 0 auto; /* Centra la imagen horizontalmente */
+}
+
+
 </style>

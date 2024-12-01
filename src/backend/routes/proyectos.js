@@ -227,6 +227,40 @@ router.get('/proyectos/:id_proyecto/colaboradores', async (req, res) => {
   }
 });
 
+// Invitar a un usuario a un proyecto
+router.post("/:id_proyecto/invitar", async (req, res) => {
+  const id_proyecto = req.params.id_proyecto;
+  const { id_usuario } = req.body;
+
+  if (!id_usuario) {
+    return res.status(400).json({ error: "El ID del usuario es obligatorio." });
+  }
+
+  try {
+    // Verificar si el usuario ya es colaborador del proyecto
+    const [colaboradores] = await db.promise().query(
+      `SELECT * FROM colaboradores WHERE id_proyecto = ? AND id_usuario = ?`,
+      [id_proyecto, id_usuario]
+    );
+
+    if (colaboradores.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "El usuario ya es colaborador de este proyecto." });
+    }
+
+    // Insertar al usuario como colaborador
+    await db.promise().query(
+      `INSERT INTO colaboradores (id_proyecto, id_usuario) VALUES (?, ?)`,
+      [id_proyecto, id_usuario]
+    );
+
+    res.status(200).json({ message: "Usuario invitado al proyecto con éxito." });
+  } catch (error) {
+    console.error("Error al invitar al usuario al proyecto:", error);
+    res.status(500).json({ error: "Error al invitar al usuario al proyecto." });
+  }
+});
 
 // Salir de un proyecto como colaborador
 router.delete('/colaboradores/:id_proyecto/:id_usuario', async (req, res) => {

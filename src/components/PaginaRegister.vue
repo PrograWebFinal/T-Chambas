@@ -27,7 +27,7 @@
     methods: {
       register() {
         alert('Usuario registrado exitosamente');
-        this.$router.push('/login'); // Redirige a iniciar sesión
+        this.$router.push('/login'); 
       }
     }
   };

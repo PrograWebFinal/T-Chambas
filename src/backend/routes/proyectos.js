@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // Conexión a la base de datos
-const { obtenerHabilidades } = require('../services/habilidades'); // Servicio compartido
+const db = require('../db'); 
+const { obtenerHabilidades } = require('../services/habilidades'); 
 
-// Crear un proyecto
+
 router.post('/', async (req, res) => {
   const { nombre_proyecto, descripcion, id_usuario_creador, habilidades } = req.body;
 
@@ -170,7 +170,6 @@ router.get('/:id/jefe', async (req, res) => {
   const id_proyecto = req.params.id;
 
   try {
-    // Consulta para obtener el dueño del proyecto
     const [result] = await db.promise().query(
       `SELECT 
          u.nombre, 
@@ -187,7 +186,6 @@ router.get('/:id/jefe', async (req, res) => {
       return res.status(404).json({ error: 'Proyecto no encontrado o sin dueño asociado.' });
     }
 
-    // Retornar el dueño del proyecto
     res.status(200).json(result[0]);
   } catch (error) {
     console.error('Error al obtener el dueño del proyecto:', error);
@@ -268,7 +266,6 @@ router.post("/:id_proyecto/invitar", async (req, res) => {
   }
 
   try {
-    // Verificar si el usuario ya es colaborador del proyecto
     const [colaboradores] = await db.promise().query(
       `SELECT * FROM colaboradores WHERE id_proyecto = ? AND id_usuario = ?`,
       [id_proyecto, id_usuario]
@@ -280,7 +277,6 @@ router.post("/:id_proyecto/invitar", async (req, res) => {
         .json({ error: "El usuario ya es colaborador de este proyecto." });
     }
 
-    // Insertar al usuario como colaborador
     await db.promise().query(
       `INSERT INTO colaboradores (id_proyecto, id_usuario) VALUES (?, ?)`,
       [id_proyecto, id_usuario]
@@ -293,7 +289,6 @@ router.post("/:id_proyecto/invitar", async (req, res) => {
   }
 });
 
-// Salir de un proyecto como colaborador
 router.delete('/colaboradores/:id_proyecto/:id_usuario', async (req, res) => {
   const { id_proyecto, id_usuario } = req.params;
 
@@ -311,9 +306,6 @@ router.delete('/colaboradores/:id_proyecto/:id_usuario', async (req, res) => {
   }
 });
 
-
-
-// Reutilizar el endpoint de habilidades desde usuarios
 router.get('/habilidades', async (req, res) => {
   try {
     const [habilidades] = await obtenerHabilidades();
@@ -324,7 +316,7 @@ router.get('/habilidades', async (req, res) => {
   }
 });
 
-// Obtener todos los proyectos
+// Obtener proyectos
 // Obtener todos los proyectos excluyendo los del usuario actual y los que ya colabora
 router.get("/", async (req, res) => {
   try {
@@ -334,7 +326,6 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "El ID del usuario es requerido." });
     }
 
-    // Consulta para obtener proyectos, excluyendo los creados por el usuario actual y los que ya colabora
     const [proyectos] = await db.promise().query(
       `SELECT 
          p.id_proyecto, 
@@ -350,7 +341,6 @@ router.get("/", async (req, res) => {
       [usuarioActualId, usuarioActualId]
     );
 
-    // Obtener las habilidades para cada proyecto
     for (const proyecto of proyectos) {
       const [habilidades] = await db.promise().query(
         `SELECT h.id_habilidad, h.nombre_habilidad
@@ -362,7 +352,6 @@ router.get("/", async (req, res) => {
       proyecto.habilidades = habilidades;
     }
 
-    // Enviar los proyectos con el `id_proyecto` incluido
     res.status(200).json(proyectos);
   } catch (error) {
     console.error("Error al obtener proyectos:", error);
@@ -375,8 +364,7 @@ router.get("/", async (req, res) => {
 // Obtener proyectos en los que el usuario ya está colaborando
 router.get("/colaborando/:userId", async (req, res) => {
   try {
-    const usuarioActualId = req.params.userId; // Obtener el userId de los parámetros de la ruta
-
+    const usuarioActualId = req.params.userId; 
     if (!usuarioActualId) {
       return res.status(400).json({ error: "El ID del usuario es requerido." });
     }
@@ -401,9 +389,8 @@ router.get("/colaborando/:userId", async (req, res) => {
 
 
 router.get("/:id", async (req, res) => {
-  const { id } = req.params; // ID del proyecto
+  const { id } = req.params; 
   try {
-    // Obtener los detalles del proyecto
     const [proyecto] = await db.promise().query(
       `SELECT 
          p.id_proyecto, 
@@ -416,13 +403,9 @@ router.get("/:id", async (req, res) => {
        WHERE p.id_proyecto = ?`,
       [id]
     );
-
-    // Validar si el proyecto existe
     if (proyecto.length === 0) {
       return res.status(404).json({ error: "Proyecto no encontrado." });
     }
-
-    // Obtener los colaboradores del proyecto
     const [colaboradores] = await db.promise().query(
       `SELECT 
          u.id_usuario, 
@@ -446,11 +429,11 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/:id/unirse", async (req, res) => {
-  const { id } = req.params; // ID del proyecto
-  const { userId } = req.body; // ID del usuario que desea unirse
+  const { id } = req.params; 
+  const { userId } = req.body; 
 
   try {
-    // Validar si el usuario ya es colaborador
+    
     const [existe] = await db.promise().query(
       `SELECT 1 FROM colaboradores WHERE id_usuario = ? AND id_proyecto = ?`,
       [userId, id]
@@ -460,7 +443,7 @@ router.post("/:id/unirse", async (req, res) => {
       return res.status(400).json({ error: "El usuario ya es colaborador de este proyecto." });
     }
 
-    // Insertar el usuario como colaborador
+    
     await db.promise().query(
       `INSERT INTO colaboradores (id_usuario, id_proyecto) VALUES (?, ?)`,
       [userId, id]

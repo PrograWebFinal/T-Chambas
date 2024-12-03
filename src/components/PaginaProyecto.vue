@@ -1,15 +1,11 @@
 <template>
   <div>
-    <!-- Barra de navegación -->
     <BarraMenu />
 
-    <!-- Contenedor principal -->
     <div class="proyecto-container">
       <h1 class="text-center">Mis Proyectos</h1>
 
-      <!-- Formulario para crear/editar proyectos -->
       <form @submit.prevent="publicarProyecto" class="proyecto-form">
-        <!-- Título del Proyecto -->
         <div class="mb-3">
           <label for="titulo" class="form-label">Título del Proyecto:</label>
           <input
@@ -73,14 +69,12 @@
           </div>
         </div>
 
-        <!-- Botones -->
         <div class="text-center">
           <button type="submit" class="btn btn-primary me-2">Publicar Proyecto</button>
           <button type="button" class="btn btn-secondary" @click="limpiarFormulario">Cancelar</button>
         </div>
       </form>
 
-      <!-- Lista de Proyectos -->
       <div class="proyectos-creados mt-4" v-if="proyectos.length > 0">
         <h2 class="text-center">Proyectos Creados</h2>
         <ul class="list-group">
@@ -106,7 +100,6 @@
         </ul>
       </div>
 
-      <!-- Modal de Colaboradores -->
       <div v-if="modalColaboradores" class="modal-backdrop">
         <div class="modal-content">
           <h2>Compañeros que son parte de {{ proyectoSeleccionado.nombre_proyecto }}</h2>
@@ -146,7 +139,7 @@ export default {
       proyectos: [],
       filtro: "",
       talentosMostrados: 5,
-      baseTalentos: [], // Almacena los talentos disponibles
+      baseTalentos: [], 
       proyectoEditando: null,
       modalColaboradores: false,
       colaboradores: [],
@@ -225,7 +218,7 @@ export default {
           title: "Eliminado",
           text: "El colaborador fue eliminado del proyecto.",
         });
-        this.mostrarColaboradores(this.proyectoSeleccionado); // Recargar colaboradores
+        this.mostrarColaboradores(this.proyectoSeleccionado); 
       } catch (error) {
         console.error("Error al eliminar colaborador:", error);
         Swal.fire({
@@ -334,7 +327,7 @@ export default {
   },
   mounted() {
     this.cargarProyectos();
-    this.cargarTalentos(); // Se asegura de cargar los talentos disponibles
+    this.cargarTalentos(); 
   },
 };
 </script>
@@ -400,11 +393,11 @@ h1 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1050; /* Asegúrate de que sea mayor que otros elementos */
+  z-index: 1050;
 }
 
 .modal-content {
@@ -414,7 +407,7 @@ h1 {
   max-width: 500px;
   width: 90%;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1051; /* Modal por encima del fondo */
+  z-index: 1051; 
   text-align: center;
 }
 

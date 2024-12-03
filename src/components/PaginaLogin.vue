@@ -27,8 +27,8 @@
     methods: {
       login() {
         if (this.email === 'test@example.com' && this.password === 'password') {
-          localStorage.setItem('auth', true); // Guardar autenticación en localStorage
-          this.$router.push('/'); // Redirigir a la página principal
+          localStorage.setItem('auth', true); 
+          this.$router.push('/'); 
         } else {
           alert('Correo o contraseña incorrectos');
         }

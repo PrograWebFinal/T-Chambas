@@ -1,11 +1,9 @@
 <template>
   <div>
-    <!-- Importar el menú -->
     <BarraMenu />
 
-    <!-- Contenido Principal -->
     <div class="welcome-container">
-      <h1 class="text-center">¡Bienvenido a A-Tinder Chambas!</h1>
+      <h1 class="text-center">¡Bienvenido a Connect-A!</h1>
       <p class="text-center lead">
         Encuentra compañeros para tus proyectos universitarios y conecta con
         ideas innovadoras.
@@ -19,18 +17,16 @@
 </template>
 
 <script>
-import BarraMenu from "@/components/BarraMenu.vue"; // Importar el menú
+import BarraMenu from "@/components/BarraMenu.vue";
 
 export default {
   name: "PaginaInicio",
   components: {
-    BarraMenu, // Registra el menú como un componente
+    BarraMenu, 
   },
   mounted() {
-    // Verifica si el usuario está autenticado
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      // Si no hay userId, redirige al login
       this.$router.push("/login");
     }
   },
@@ -38,7 +34,6 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos principales */
 .welcome-container {
   display: flex;
   flex-direction: column;

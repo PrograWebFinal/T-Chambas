@@ -1,16 +1,13 @@
 <template>
   <div>
-    <!-- Barra de navegación -->
     <BarraMenu />
 
-    <!-- Contenido principal -->
     <div class="buscar-companeros">
       <h1 class="text-center">Busca Compañeros</h1>
       <p class="text-center text-muted mb-4">
         Descubre compañeros de trabajo para tus proyectos.
       </p>
 
-      <!-- Cuadro de búsqueda -->
       <input
         type="text"
         placeholder="Buscar por nombre, habilidades o carrera"
@@ -18,7 +15,6 @@
         class="form-control mb-4"
       />
 
-      <!-- Botones de habilidades más buscadas -->
       <div class="habilidades-populares mb-3">
         <button
           v-for="habilidad in habilidadesPopulares"
@@ -30,7 +26,6 @@
         </button>
       </div>
 
-      <!-- Perfiles de alumnos en paneles -->
       <div class="row">
         <div v-for="perfil in perfilesFiltrados" :key="perfil.id_usuario" class="col-md-4 col-lg-3 mb-4">
           <div class="card perfil-card" @click="abrirModal(perfil)">
@@ -43,7 +38,6 @@
         </div>
       </div>
 
-      <!-- Modal para Ficha Técnica -->
       <div v-if="mostrarModal && perfilSeleccionado" class="modal-backdrop">
         <div class="modal-content">
           <h2>{{ perfilSeleccionado.nombre }}</h2>
@@ -51,7 +45,6 @@
           <p><strong>Habilidades:</strong> {{ perfilSeleccionado.habilidades }}</p>
           <p><strong>Descripción:</strong> {{ perfilSeleccionado.descripcion }}</p>
 
-          <!-- Selección de proyecto -->
           <div class="mt-3">
             <label for="proyectoSeleccionado" class="form-label">Selecciona un proyecto:</label>
             <select
@@ -95,9 +88,9 @@ export default {
       perfilSeleccionado: null,
       habilidadesPopulares: [],
       perfiles: [],
-      proyectos: [], // Almacena los proyectos creados por el usuario
-      mostrarModal: false, // Controla la visibilidad del modal
-      proyectoSeleccionado: null, // Proyecto seleccionado para invitar
+      proyectos: [], 
+      mostrarModal: false, 
+      proyectoSeleccionado: null, 
     };
   },
   computed: {
@@ -168,7 +161,6 @@ export default {
         const { id_usuario } = this.perfilSeleccionado;
         const id_proyecto = this.proyectoSeleccionado;
 
-        // Confirmación con SweetAlert2
         const result = await Swal.fire({
           title: "¿Estás seguro?",
           text: `¿Quieres invitar a ${this.perfilSeleccionado.nombre} al proyecto seleccionado?`,
@@ -203,13 +195,12 @@ export default {
   },
   mounted() {
     this.cargarPerfiles();
-    this.cargarProyectos(); // Cargar los proyectos creados por el usuario
+    this.cargarProyectos();
   },
 };
 </script>
 
 <style scoped>
-/* Estilos de los paneles */
 .perfil-card {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -223,7 +214,7 @@ export default {
 .perfil-imagen {
   width: 100%;
   height: 150px;
-  object-fit: cover; /* Evita la deformación de la imagen */
+  object-fit: cover;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
@@ -360,9 +351,9 @@ export default {
   border-radius: 50%;
   width: 100px;
   height: 100px;
-  object-fit: cover; /* Asegura que la imagen no se deforme */
+  object-fit: cover; 
   display: block;
-  margin: 0 auto; /* Centra la imagen horizontalmente */
+  margin: 0 auto; 
 }
 
 

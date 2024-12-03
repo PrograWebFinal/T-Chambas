@@ -1,13 +1,10 @@
 <template>
   <div>
-    <!-- Barra de navegación -->
     <BarraMenu />
 
-    <!-- Contenedor principal del perfil -->
     <div class="perfil-container">
       <h1 class="text-center">Mi Perfil</h1>
       <form @submit.prevent="guardarPerfil" class="perfil-form">
-        <!-- Nombre (solo lectura) -->
         <div class="mb-3">
           <label for="nombre" class="form-label">Nombre:</label>
           <input
@@ -19,7 +16,6 @@
           />
         </div>
 
-        <!-- Habilidades -->
         <div class="mb-3">
           <label for="habilidades" class="form-label">Habilidades:</label>
           <input
@@ -61,7 +57,6 @@
           </div>
         </div>
 
-        <!-- Biografía -->
         <div class="mb-3">
           <label for="biografia" class="form-label">Biografía:</label>
           <textarea
@@ -72,8 +67,7 @@
             placeholder="Cuéntales sobre ti..."
           ></textarea>
         </div>
-
-        <!-- Botones -->
+        
         <div class="text-center">
           <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
           <button type="button" class="btn btn-secondary" @click="regresar">Regresar</button>

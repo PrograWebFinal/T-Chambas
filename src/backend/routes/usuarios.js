@@ -1,28 +1,24 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const db = require('../db'); // Conexión a la base de datos
+const db = require('../db');
 const router = express.Router();
 
-// **Registro de usuario**
+// Registro de usuario
 router.post('/registro', async (req, res) => {
   const { nombre, apellidos, correo, contraseña, id_carrera, descripcion } = req.body;
 
-  // Validar campos obligatorios
   if (!nombre || !apellidos || !correo || !contraseña) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
   }
 
   try {
-    // Verificar si el correo ya está registrado
     const [userExists] = await db.promise().query('SELECT id_usuario FROM usuarios WHERE correo = ?', [correo]);
     if (userExists.length > 0) {
       return res.status(400).json({ error: 'El correo ya está registrado.' });
     }
 
-    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
-    // Insertar nuevo usuario
     const [result] = await db.promise().query(
       'INSERT INTO usuarios (nombre, apellidos, correo, contraseña, id_carrera, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
       [nombre, apellidos, correo, hashedPassword, id_carrera || null, descripcion || null]
@@ -35,25 +31,22 @@ router.post('/registro', async (req, res) => {
   }
 });
 
-// **Login de usuario**
+// Login de usuario
 router.post('/login', async (req, res) => {
   const { correo, contraseña } = req.body;
 
-  // Validar campos obligatorios
   if (!correo || !contraseña) {
     return res.status(400).json({ error: 'Correo y contraseña son obligatorios.' });
   }
 
   try {
-    // Buscar usuario por correo
     const [rows] = await db.promise().query('SELECT * FROM usuarios WHERE correo = ?', [correo]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
     const user = rows[0];
-
-    // Verificar contraseña
+    
     const isPasswordValid = await bcrypt.compare(contraseña, user.contraseña);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
@@ -149,16 +142,13 @@ router.put('/perfil/:id/habilidades', async (req, res) => {
   const { habilidades } = req.body; // Array de IDs de habilidades
 
   try {
-    // Inicia una transacción
     await db.promise().beginTransaction();
 
-    // Elimina habilidades actuales
     await db.promise().query(
       `DELETE FROM usuario_habilidades WHERE id_usuario = ?`,
       [userId]
     );
 
-    // Inserta las nuevas habilidades
     if (habilidades && habilidades.length > 0) {
       const values = habilidades.map((idHabilidad) => [userId, idHabilidad]);
       await db.promise().query(
@@ -167,7 +157,6 @@ router.put('/perfil/:id/habilidades', async (req, res) => {
       );
     }
 
-    // Confirma la transacción
     await db.promise().commit();
 
     res.status(200).json({ message: 'Habilidades actualizadas correctamente.' });
@@ -178,12 +167,12 @@ router.put('/perfil/:id/habilidades', async (req, res) => {
   }
 });
 
+// Actualizar la descripción
 router.put('/perfil/:id/descripcion', async (req, res) => {
   const userId = req.params.id;
-  const { descripcion } = req.body; // La nueva descripción proporcionada por el usuario
+  const { descripcion } = req.body;
 
   try {
-    // Actualizar la descripción en la base de datos
     const [result] = await db.promise().query(
       `UPDATE usuarios SET descripcion = ? WHERE id_usuario = ?`,
       [descripcion, userId]
@@ -200,18 +189,15 @@ router.put('/perfil/:id/descripcion', async (req, res) => {
   }
 });
 
-// Obtener todos los usuarios con sus habilidades y proyectos, excluyendo al usuario actual
+// Obtener todos los usuarios con sus habilidades y proyectos
 router.get("/", async (req, res) => {
   try {
-    // Obtener el userId desde los parámetros
     const usuarioActualId = req.query.userId;
 
-    // Validar que se haya proporcionado un userId
     if (!usuarioActualId) {
       return res.status(400).json({ error: "El ID del usuario es requerido." });
     }
 
-    // Consulta para obtener los usuarios, excluyendo al usuario actual
     const [usuarios] = await db.promise().query(
       `SELECT 
          u.id_usuario, 
@@ -229,7 +215,7 @@ router.get("/", async (req, res) => {
       [usuarioActualId]
     );
 
-    res.status(200).json(usuarios); // Enviar los usuarios al cliente
+    res.status(200).json(usuarios); 
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
     res.status(500).json({ error: "Error interno al obtener usuarios." });

@@ -1,8 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow">
     <div class="container">
-      <!-- Enlace de la marca que redirige al inicio -->
-      <a class="navbar-brand" @click.prevent="irInicio" style="cursor: pointer;">A-Tinder Chambas</a>
+      <a class="navbar-brand" @click.prevent="irInicio" style="cursor: pointer;">Connect-A</a>
       <button
         class="navbar-toggler"
         type="button"
@@ -16,27 +15,22 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <!-- Navegación a Perfil -->
           <li class="nav-item">
             <router-link to="/Perfil" class="nav-link">Mi Perfil</router-link>
           </li>
 
-          <!-- Navegación a Mis Proyectos -->
           <li class="nav-item">
             <router-link to="/Proyecto" class="nav-link">Mis Proyectos</router-link>
           </li>
 
-          <!-- Navegación para Buscar Compañeros -->
           <li class="nav-item">
             <router-link to="/Perfiles" class="nav-link">Buscar Compañero</router-link>
           </li>
 
-          <!-- Navegación para Buscar Proyectos -->
           <li class="nav-item">
             <router-link to="/Proyectos" class="nav-link">Buscar Proyectos</router-link>
           </li>
 
-          <!-- Cerrar Sesión -->
           <li class="nav-item">
             <button @click="logout" class="nav-link btn btn-link">Cerrar Sesión</button>
           </li>
@@ -52,17 +46,14 @@ export default {
   mounted() {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      // Redirige al login si no hay sesión iniciada
       this.$router.push("/login");
     }
   },
   methods: {
     irInicio() {
-      // Redirige a la página de inicio
       this.$router.push("/");
     },
     logout() {
-      // Limpia el almacenamiento local y redirige al login
       localStorage.removeItem("userId");
       this.$router.push("/login");
     },

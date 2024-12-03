@@ -1,7 +1,6 @@
 <template>
   <div class="container d-flex justify-content-center align-items-center vh-100 bg-white">
     <div class="card shadow-lg p-4" style="width: 100%; max-width: 450px;">
-      <!-- Tabs manuales -->
       <div class="d-flex justify-content-center mb-4">
         <button
           class="btn btn-outline-primary me-2"
@@ -19,9 +18,7 @@
         </button>
       </div>
 
-      <!-- Contenido dinámico de las pestañas -->
       <div>
-        <!-- Formulario de Login -->
         <div v-if="activeTab === 'login'">
           <form @submit.prevent="login">
             <div class="mb-3">
@@ -50,7 +47,6 @@
           </form>
         </div>
 
-        <!-- Formulario de Registro -->
         <div v-if="activeTab === 'register'">
           <form @submit.prevent="register">
             <div class="mb-3">
@@ -178,10 +174,8 @@ export default {
           confirmButtonText: "Continuar",
         });
 
-        // Guardar el ID del usuario en localStorage
         localStorage.setItem("userId", response.data.user.id_usuario);
 
-        // Redirigir al usuario a la página principal
         this.$router.push("/");
       } catch (error) {
         console.error("Error al iniciar sesión:", error);
@@ -204,7 +198,7 @@ export default {
           apellidos: this.registerData.lastName,
           correo: this.registerData.email,
           contraseña: this.registerData.password,
-          id_carrera: this.registerData.career, // ID de la carrera seleccionada
+          id_carrera: this.registerData.career, 
           descripcion: null,
         });
 
@@ -231,7 +225,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchCarreras(); // Cargar las carreras al montar el componente
+    this.fetchCarreras(); 
   },
 };
 </script>

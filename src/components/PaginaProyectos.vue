@@ -1,20 +1,16 @@
 <template>
   <div>
-    <!-- Barra de navegación -->
     <BarraMenu />
 
-    <!-- Contenido principal -->
     <div class="proyectos-container container mt-4">
       <h1 class="text-center mb-2">Explora y Colabora en Proyectos</h1>
 
-      <!-- SECCIÓN: Proyectos Disponibles -->
       <div>
         <h2 class="text-center mb-4">Explora Proyectos Disponibles</h2>
         <p class="text-center text-muted mb-4">
           Descubre proyectos emocionantes, busca por habilidades o explora nuestras recomendaciones.
         </p>
 
-        <!-- Cuadro de búsqueda -->
         <input
           type="text"
           placeholder="Buscar por título o habilidades requeridas"
@@ -23,19 +19,16 @@
           aria-label="Buscar proyectos"
         />
 
-        <!-- Spinner de carga -->
         <div v-if="cargando" class="text-center my-5">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
 
-        <!-- Mensaje de vacío -->
         <div v-if="!cargando && proyectosFiltrados.length === 0" class="text-center my-5">
           <p class="text-muted">No se encontraron proyectos con los criterios seleccionados.</p>
         </div>
 
-        <!-- Lista de proyectos -->
         <div class="proyectos" v-else>
           <div v-for="(fila, index) in filasProyectos" :key="index" class="row mb-4">
             <div
@@ -56,7 +49,6 @@
           </div>
         </div>
 
-        <!-- Modal para detalles del proyecto disponible -->
         <div v-if="mostrarModal && proyectoSeleccionado" class="modal-backdrop">
           <div class="modal-content">
             <h2>{{ proyectoSeleccionado.titulo }}</h2>
@@ -82,18 +74,15 @@
         </div>
       </div>
 
-      <!-- SECCIÓN: Proyectos en los que Colaboras -->
       <div>
         <h2 class="text-center mb-4">Proyectos en los que Colaboras</h2>
 
-        <!-- Spinner de carga -->
         <div v-if="cargandoColaborando" class="text-center my-5">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
 
-        <!-- Mensaje de vacío -->
         <div
           v-if="!cargandoColaborando && proyectosColaborando.length === 0"
           class="text-center my-5"
@@ -101,7 +90,6 @@
           <p class="text-muted">No estás colaborando en ningún proyecto actualmente.</p>
         </div>
 
-        <!-- Lista de proyectos -->
         <div class="proyectos" v-else>
           <div
             v-for="(proyecto) in proyectosColaborando"
@@ -121,7 +109,6 @@
           </div>
         </div>
 
-        <!-- Modal para detalles del proyecto colaborando -->
         <div v-if="mostrarModalColaborando && proyectoSeleccionado" class="modal-backdrop">
           <div class="modal-content">
             <h2>{{ proyectoSeleccionado.titulo }}</h2>

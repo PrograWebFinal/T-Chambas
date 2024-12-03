@@ -77,7 +77,6 @@ export default {
         integrantes: response.data.integrantes || [],
       };
 
-      // Validar si el usuario actual es un integrante del proyecto
       const userId = localStorage.getItem("userId");
       if (userId && Array.isArray(this.proyecto.integrantes)) {
         this.esIntegrante = this.proyecto.integrantes.some(
@@ -96,8 +95,7 @@ export default {
           alert("No estás autenticado. Inicia sesión para unirte al proyecto.");
           return;
         }
-
-        // Validar si el proyecto tiene un ID antes de realizar la solicitud
+        
         if (!this.proyecto.id_proyecto) {
           alert("Error al obtener el ID del proyecto. Inténtalo nuevamente.");
           return;
